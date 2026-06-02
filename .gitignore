@@ -8,4 +8,4 @@ terraform.tfvars
 inventory.ini
 *.retry
 __pycache__/
-EOF
+EOF**/.DS_Store
