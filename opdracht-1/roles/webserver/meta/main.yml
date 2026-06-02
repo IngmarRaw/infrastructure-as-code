@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: Ingmar Renses
+  description: Installeert apache2 zonder de apt module en demonstreert changed/failed gedrag.
+  company: Windesheim
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+
+  galaxy_tags:
+    - apache
+    - command
+    - ubuntu
+    - training
+
+dependencies: []
