@@ -6,7 +6,7 @@ virtual_network_name = "JOUW_VNET"
 subnet_name          = "JOUW_SUBNET"
 
 vm_name              = "les05-webserver"
-vm_size              = "Standard_B1s"
+vm_size              = "Standard_DS1_v2"
 admin_username       = "iacuser"
 
 ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
