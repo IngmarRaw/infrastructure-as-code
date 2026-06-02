@@ -55,7 +55,7 @@ jobs:
 
   deploy:
     name: Voer Ansible playbook uit
-    runs-on: [self-hosted]
+    runs-on: [self-hosted, iac-jumphost]
     needs: syntax-check
 
     steps:
