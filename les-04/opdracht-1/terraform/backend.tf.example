@@ -1,0 +1,8 @@
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "NAAM_VAN_RESOURCE_GROUP"
+    storage_account_name = "NAAM_VAN_STORAGE_ACCOUNT"
+    container_name       = "tfstate"
+    key                  = "les-04-opdracht-1.tfstate"
+  }
+}
