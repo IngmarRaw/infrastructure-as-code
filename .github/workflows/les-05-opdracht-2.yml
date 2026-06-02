@@ -16,31 +16,47 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Initialiseer Terraform remote state opnieuw
+      - name: Debug en initialiseer Terraform remote state
         working-directory: les-04/opdracht-1/terraform
         run: |
           set -euo pipefail
+          set -x
+
+          echo "Gebruiker:"
+          whoami
+
+          echo "Home directory:"
+          echo "$HOME"
 
           echo "Werkmap:"
           pwd
 
-          echo "Terraform bestanden:"
+          echo "Bestanden in Terraform map:"
           ls -la
 
-          echo "Backend config:"
+          echo "Azure account:"
+          az account show
+
+          echo "Backend configuratie:"
           cat backend.tf
 
-          echo "Outputs config:"
+          echo "Outputs configuratie:"
           cat outputs.tf
 
-          echo "Verwijder oude Terraform backend cache uit runner workspace"
+          echo "Verwijder oude Terraform backend cache uit runner workspace:"
           rm -rf .terraform
 
-          echo "Terraform init met reconfigure"
+          echo "Terraform init met remote backend:"
           terraform init -reconfigure
 
-          echo "Controleer Terraform outputs"
+          echo "Terraform outputs:"
           terraform output
+
+          echo "Controleer losse outputs:"
+          terraform output -raw webserver_name
+          terraform output -raw webserver_ip
+          terraform output -raw databaseserver_name
+          terraform output -raw databaseserver_ip
 
       - name: Genereer tijdelijke inventory vanuit Terraform outputs
         run: |
@@ -86,31 +102,47 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Initialiseer Terraform remote state opnieuw
+      - name: Debug en initialiseer Terraform remote state
         working-directory: les-04/opdracht-1/terraform
         run: |
           set -euo pipefail
+          set -x
+
+          echo "Gebruiker:"
+          whoami
+
+          echo "Home directory:"
+          echo "$HOME"
 
           echo "Werkmap:"
           pwd
 
-          echo "Terraform bestanden:"
+          echo "Bestanden in Terraform map:"
           ls -la
 
-          echo "Backend config:"
+          echo "Azure account:"
+          az account show
+
+          echo "Backend configuratie:"
           cat backend.tf
 
-          echo "Outputs config:"
+          echo "Outputs configuratie:"
           cat outputs.tf
 
-          echo "Verwijder oude Terraform backend cache uit runner workspace"
+          echo "Verwijder oude Terraform backend cache uit runner workspace:"
           rm -rf .terraform
 
-          echo "Terraform init met reconfigure"
+          echo "Terraform init met remote backend:"
           terraform init -reconfigure
 
-          echo "Controleer Terraform outputs"
+          echo "Terraform outputs:"
           terraform output
+
+          echo "Controleer losse outputs:"
+          terraform output -raw webserver_name
+          terraform output -raw webserver_ip
+          terraform output -raw databaseserver_name
+          terraform output -raw databaseserver_ip
 
       - name: Genereer tijdelijke inventory vanuit Terraform outputs
         run: |
