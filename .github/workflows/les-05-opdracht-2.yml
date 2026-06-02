@@ -5,9 +5,6 @@ on:
   push:
     branches:
       - test
-    paths:
-      - "les-05/opdracht-2/**"
-      - ".github/workflows/les-05-opdracht-2.yml"
 
 jobs:
   syntax-check:
@@ -18,12 +15,25 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
+      - name: Maak inventory vanuit GitHub Secret
+        working-directory: les-05/opdracht-2
+        run: |
+          cat > inventory.ini <<'EOF'
+          ${{ secrets.ANSIBLE_INVENTORY }}
+          EOF
+
+      - name: Toon gegenereerde inventory zonder gevoelige inhoud
+        working-directory: les-05/opdracht-2
+        run: |
+          test -s inventory.ini
+          grep '^\[' inventory.ini
+
       - name: Toon Ansible versie
         run: ansible --version
 
       - name: Controleer playbook syntax
         working-directory: les-05/opdracht-2
-        run: ansible-playbook -i ../../les-04/opdracht-1/ansible/inventory.ini playbook.yml --syntax-check
+        run: ansible-playbook -i inventory.ini playbook.yml --syntax-check
 
   deploy:
     name: Voer Ansible playbook uit
@@ -32,8 +42,19 @@ jobs:
 
     steps:
       - name: Haal repository op
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
+
+      - name: Maak inventory vanuit GitHub Secret
+        working-directory: les-05/opdracht-2
+        run: |
+          cat > inventory.ini <<'EOF'
+          ${{ secrets.ANSIBLE_INVENTORY }}
+          EOF
+
+      - name: Controleer bereikbaarheid webservers
+        working-directory: les-05/opdracht-2
+        run: ansible -i inventory.ini webservers -m ping
 
       - name: Draai Ansible playbook
         working-directory: les-05/opdracht-2
-        run: ansible-playbook -i ../../les-04/opdracht-1/ansible/inventory.ini playbook.yml
+        run: ansible-playbook -i inventory.ini playbook.yml
