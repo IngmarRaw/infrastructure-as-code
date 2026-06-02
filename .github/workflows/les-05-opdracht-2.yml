@@ -16,75 +16,19 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Debug en initialiseer Terraform remote state
-        working-directory: les-04/opdracht-1/terraform
-        run: |
-          set -euo pipefail
-          set -x
-
-          echo "Gebruiker:"
-          whoami
-
-          echo "Home directory:"
-          echo "$HOME"
-
-          echo "Werkmap:"
-          pwd
-
-          echo "Bestanden in Terraform map:"
-          ls -la
-
-          echo "Azure account:"
-          az account show
-
-          echo "Backend configuratie:"
-          cat backend.tf
-
-          echo "Outputs configuratie:"
-          cat outputs.tf
-
-          echo "Verwijder oude Terraform backend cache uit runner workspace:"
-          rm -rf .terraform
-
-          echo "Terraform init met remote backend:"
-          terraform init -reconfigure
-
-          echo "Terraform outputs:"
-          terraform output
-
-          echo "Controleer losse outputs:"
-          terraform output -raw webserver_name
-          terraform output -raw webserver_ip
-          terraform output -raw databaseserver_name
-          terraform output -raw databaseserver_ip
-
-      - name: Genereer tijdelijke inventory vanuit Terraform outputs
+      - name: Genereer tijdelijke inventory vanuit GitHub Secret
+        working-directory: les-05/opdracht-2
         run: |
           set -euo pipefail
 
-          WEB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_name)
-          WEB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_ip)
-          DB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_name)
-          DB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_ip)
+          cat > inventory.ini <<'EOF'
+          ${{ secrets.ANSIBLE_INVENTORY }}
+          EOF
 
-          test -n "$WEB_NAME"
-          test -n "$WEB_IP"
-          test -n "$DB_NAME"
-          test -n "$DB_IP"
+          test -s inventory.ini
 
-          printf "[webservers]\n" > les-05/opdracht-2/inventory.ini
-          printf "%s ansible_host=%s\n\n" "$WEB_NAME" "$WEB_IP" >> les-05/opdracht-2/inventory.ini
-
-          printf "[databaseservers]\n" >> les-05/opdracht-2/inventory.ini
-          printf "%s ansible_host=%s\n\n" "$DB_NAME" "$DB_IP" >> les-05/opdracht-2/inventory.ini
-
-          printf "[all:vars]\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_user=iacuser\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_ssh_private_key_file=~/.ssh/id_ed25519\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_python_interpreter=/usr/bin/python3\n" >> les-05/opdracht-2/inventory.ini
-
-          echo "---- Gegenereerde inventory ----"
-          cat -n les-05/opdracht-2/inventory.ini
+          echo "Inventory is aangemaakt. Groepen:"
+          grep '^\[' inventory.ini
 
       - name: Toon Ansible versie
         run: ansible --version
@@ -102,75 +46,19 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Debug en initialiseer Terraform remote state
-        working-directory: les-04/opdracht-1/terraform
-        run: |
-          set -euo pipefail
-          set -x
-
-          echo "Gebruiker:"
-          whoami
-
-          echo "Home directory:"
-          echo "$HOME"
-
-          echo "Werkmap:"
-          pwd
-
-          echo "Bestanden in Terraform map:"
-          ls -la
-
-          echo "Azure account:"
-          az account show
-
-          echo "Backend configuratie:"
-          cat backend.tf
-
-          echo "Outputs configuratie:"
-          cat outputs.tf
-
-          echo "Verwijder oude Terraform backend cache uit runner workspace:"
-          rm -rf .terraform
-
-          echo "Terraform init met remote backend:"
-          terraform init -reconfigure
-
-          echo "Terraform outputs:"
-          terraform output
-
-          echo "Controleer losse outputs:"
-          terraform output -raw webserver_name
-          terraform output -raw webserver_ip
-          terraform output -raw databaseserver_name
-          terraform output -raw databaseserver_ip
-
-      - name: Genereer tijdelijke inventory vanuit Terraform outputs
+      - name: Genereer tijdelijke inventory vanuit GitHub Secret
+        working-directory: les-05/opdracht-2
         run: |
           set -euo pipefail
 
-          WEB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_name)
-          WEB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_ip)
-          DB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_name)
-          DB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_ip)
+          cat > inventory.ini <<'EOF'
+          ${{ secrets.ANSIBLE_INVENTORY }}
+          EOF
 
-          test -n "$WEB_NAME"
-          test -n "$WEB_IP"
-          test -n "$DB_NAME"
-          test -n "$DB_IP"
+          test -s inventory.ini
 
-          printf "[webservers]\n" > les-05/opdracht-2/inventory.ini
-          printf "%s ansible_host=%s\n\n" "$WEB_NAME" "$WEB_IP" >> les-05/opdracht-2/inventory.ini
-
-          printf "[databaseservers]\n" >> les-05/opdracht-2/inventory.ini
-          printf "%s ansible_host=%s\n\n" "$DB_NAME" "$DB_IP" >> les-05/opdracht-2/inventory.ini
-
-          printf "[all:vars]\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_user=iacuser\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_ssh_private_key_file=~/.ssh/id_ed25519\n" >> les-05/opdracht-2/inventory.ini
-          printf "ansible_python_interpreter=/usr/bin/python3\n" >> les-05/opdracht-2/inventory.ini
-
-          echo "---- Gegenereerde inventory ----"
-          cat -n les-05/opdracht-2/inventory.ini
+          echo "Inventory is aangemaakt. Groepen:"
+          grep '^\[' inventory.ini
 
       - name: Controleer bereikbaarheid webservers
         working-directory: les-05/opdracht-2
