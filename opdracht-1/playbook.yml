@@ -4,4 +4,4 @@
   become: true
 
   roles:
-    - apache_command_install
+    - webserver
