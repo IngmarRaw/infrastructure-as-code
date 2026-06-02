@@ -1,0 +1,26 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: "{{ package_install_cache_valid_time }}"
+
+- name: Installeer package
+  ansible.builtin.apt:
+    name: "{{ package_install_name }}"
+    state: present
+  notify: Restart package service
+
+- name: Zorg dat service gestart en enabled is
+  ansible.builtin.service:
+    name: "{{ package_install_service }}"
+    state: started
+    enabled: true
+
+- name: Controleer service status
+  ansible.builtin.command: "systemctl is-active {{ package_install_service }}"
+  register: package_service_status
+  changed_when: false
+
+- name: Toon service status
+  ansible.builtin.debug:
+    msg: "{{ package_install_service }} status op {{ inventory_hostname }}: {{ package_service_status.stdout }}"

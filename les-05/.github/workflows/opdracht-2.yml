@@ -1,0 +1,39 @@
+---
+name: Les 05 - Opdracht 2 CI/CD
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - "les-05/opdracht-2/**"
+      - ".github/workflows/les-05-opdracht-2.yml"
+
+jobs:
+  syntax-check:
+    name: Controleer Ansible syntax
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Toon Ansible versie
+        run: ansible --version
+
+      - name: Controleer playbook syntax
+        working-directory: les-05/opdracht-2
+        run: ansible-playbook -i ../../les-04/opdracht-1/ansible/inventory.ini playbook.yml --syntax-check
+
+  deploy:
+    name: Voer Ansible playbook uit
+    runs-on: self-hosted
+    needs: syntax-check
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Draai Ansible playbook
+        working-directory: les-05/opdracht-2
+        run: ansible-playbook -i ../../les-04/opdracht-1/ansible/inventory.ini playbook.yml

@@ -1,0 +1,6 @@
+---
+# Voorbeeldbestand voor Ansible Vault.
+# Maak een echte vault aan met:
+# ansible-vault create group_vars/all/vault.yml
+
+example_secret: "vervang_dit_met_een_versleutelde_waarde"

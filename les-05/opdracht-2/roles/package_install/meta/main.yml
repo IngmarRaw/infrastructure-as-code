@@ -1,0 +1,20 @@
+---
+galaxy_info:
+  author: IngmarRaw
+  description: Installeert een configureerbaar package en beheert de bijbehorende service.
+  company: Windesheim
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+
+  galaxy_tags:
+    - package
+    - nginx
+    - cicd
+    - ubuntu
+
+dependencies: []
