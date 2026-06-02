@@ -10,7 +10,7 @@ on:
 jobs:
   syntax-check:
     name: Controleer Ansible syntax
-    runs-on: [self-hosted, iac-jumphost]
+    runs-on: [self-hosted]
 
     steps:
       - name: Haal repository op
@@ -55,7 +55,7 @@ jobs:
 
   deploy:
     name: Voer Ansible playbook uit
-    runs-on: [self-hosted, iac-jumphost]
+    runs-on: [self-hosted]
     needs: syntax-check
 
     steps:
