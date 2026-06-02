@@ -10,16 +10,13 @@ on:
 jobs:
   syntax-check:
     name: Controleer Ansible syntax
-    runs-on: [self-hosted]
+    runs-on: self-hosted
 
     steps:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Toon Ansible versie
-        run: ansible --version
-
-      - name: Initialiseer Terraform
+      - name: Initialiseer Terraform remote state
         working-directory: les-04/opdracht-1/terraform
         run: terraform init
 
@@ -49,20 +46,23 @@ jobs:
           echo "---- Gegenereerde inventory ----"
           cat -n les-05/opdracht-2/inventory.ini
 
+      - name: Toon Ansible versie
+        run: ansible --version
+
       - name: Controleer playbook syntax
         working-directory: les-05/opdracht-2
         run: ansible-playbook -i inventory.ini playbook.yml --syntax-check
 
   deploy:
     name: Voer Ansible playbook uit
-    runs-on: [self-hosted]
+    runs-on: self-hosted
     needs: syntax-check
 
     steps:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Initialiseer Terraform
+      - name: Initialiseer Terraform remote state
         working-directory: les-04/opdracht-1/terraform
         run: terraform init
 
