@@ -1,0 +1,7 @@
+---
+- name: Opdracht 1 - Installeer apache2 zonder apt module
+  hosts: webservers
+  become: true
+
+  roles:
+    - webserver

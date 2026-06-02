@@ -1,0 +1,13 @@
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+resource_group_name  = "JOUW_RESOURCE_GROUP"
+location             = "westeurope"
+
+virtual_network_name = "JOUW_VNET"
+subnet_name          = "JOUW_SUBNET"
+
+vm_name              = "les05-webserver"
+vm_size              = "Standard_B1s"
+admin_username       = "iacuser"
+
+ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
+ssh_private_key_path = "~/.ssh/id_ed25519"
