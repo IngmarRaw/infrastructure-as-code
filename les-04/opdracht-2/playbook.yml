@@ -1,0 +1,14 @@
+---
+- name: Configureer webserver met Galaxy role
+  hosts: webservers
+  become: true
+
+  roles:
+    - webserver
+
+- name: Configureer database met Galaxy role
+  hosts: databaseservers
+  become: true
+  
+  roles:
+    - database
