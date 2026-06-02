@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Haal repository op
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Toon Ansible versie
         run: ansible --version
