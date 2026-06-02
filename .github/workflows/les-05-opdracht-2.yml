@@ -5,11 +5,12 @@ on:
   push:
     branches:
       - test
+  workflow_dispatch:
 
 jobs:
   syntax-check:
     name: Controleer Ansible syntax
-    runs-on: self-hosted
+    runs-on: [self-hosted, iac-jumphost]
 
     steps:
       - name: Haal repository op
@@ -18,13 +19,43 @@ jobs:
       - name: Toon Ansible versie
         run: ansible --version
 
+      - name: Initialiseer Terraform
+        working-directory: les-04/opdracht-1/terraform
+        run: terraform init
+
+      - name: Genereer tijdelijke inventory vanuit Terraform outputs
+        run: |
+          WEB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_name)
+          WEB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_ip)
+          DB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_name)
+          DB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_ip)
+
+          test -n "$WEB_NAME"
+          test -n "$WEB_IP"
+          test -n "$DB_NAME"
+          test -n "$DB_IP"
+
+          printf "[webservers]\n" > les-05/opdracht-2/inventory.ini
+          printf "%s ansible_host=%s\n\n" "$WEB_NAME" "$WEB_IP" >> les-05/opdracht-2/inventory.ini
+
+          printf "[databaseservers]\n" >> les-05/opdracht-2/inventory.ini
+          printf "%s ansible_host=%s\n\n" "$DB_NAME" "$DB_IP" >> les-05/opdracht-2/inventory.ini
+
+          printf "[all:vars]\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_user=iacuser\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_ssh_private_key_file=~/.ssh/id_ed25519\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_python_interpreter=/usr/bin/python3\n" >> les-05/opdracht-2/inventory.ini
+
+          echo "---- Gegenereerde inventory ----"
+          cat -n les-05/opdracht-2/inventory.ini
+
       - name: Controleer playbook syntax
         working-directory: les-05/opdracht-2
-        run: ansible-playbook playbook.yml --syntax-check
+        run: ansible-playbook -i inventory.ini playbook.yml --syntax-check
 
   deploy:
-    name: Genereer inventory en voer playbook uit
-    runs-on: self-hosted
+    name: Voer Ansible playbook uit
+    runs-on: [self-hosted, iac-jumphost]
     needs: syntax-check
 
     steps:
@@ -35,28 +66,31 @@ jobs:
         working-directory: les-04/opdracht-1/terraform
         run: terraform init
 
-      - name: Genereer inventory vanuit Terraform outputs
+      - name: Genereer tijdelijke inventory vanuit Terraform outputs
         run: |
           WEB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_name)
           WEB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw webserver_ip)
           DB_NAME=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_name)
           DB_IP=$(terraform -chdir=les-04/opdracht-1/terraform output -raw databaseserver_ip)
 
-          cat > les-05/opdracht-2/inventory.ini <<EOF
-          [webservers]
-          ${WEB_NAME} ansible_host=${WEB_IP}
+          test -n "$WEB_NAME"
+          test -n "$WEB_IP"
+          test -n "$DB_NAME"
+          test -n "$DB_IP"
 
-          [databaseservers]
-          ${DB_NAME} ansible_host=${DB_IP}
+          printf "[webservers]\n" > les-05/opdracht-2/inventory.ini
+          printf "%s ansible_host=%s\n\n" "$WEB_NAME" "$WEB_IP" >> les-05/opdracht-2/inventory.ini
 
-          [all:vars]
-          ansible_user=iacuser
-          ansible_ssh_private_key_file=~/.ssh/id_ed25519
-          ansible_python_interpreter=/usr/bin/python3
-          EOF
+          printf "[databaseservers]\n" >> les-05/opdracht-2/inventory.ini
+          printf "%s ansible_host=%s\n\n" "$DB_NAME" "$DB_IP" >> les-05/opdracht-2/inventory.ini
 
-          test -s les-05/opdracht-2/inventory.ini
-          grep '^\[' les-05/opdracht-2/inventory.ini
+          printf "[all:vars]\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_user=iacuser\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_ssh_private_key_file=~/.ssh/id_ed25519\n" >> les-05/opdracht-2/inventory.ini
+          printf "ansible_python_interpreter=/usr/bin/python3\n" >> les-05/opdracht-2/inventory.ini
+
+          echo "---- Gegenereerde inventory ----"
+          cat -n les-05/opdracht-2/inventory.ini
 
       - name: Controleer bereikbaarheid webservers
         working-directory: les-05/opdracht-2
