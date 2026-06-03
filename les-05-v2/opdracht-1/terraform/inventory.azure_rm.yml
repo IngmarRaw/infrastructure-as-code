@@ -8,7 +8,4 @@ include_vm_resource_groups:
 conditional_groups:
   webservers: tags.role == 'webserver' and tags.project == 'les-05'
 
-hostvar_expressions:
-  ansible_host: public_ipv4_addresses[0]
-
 plain_host_names: true
