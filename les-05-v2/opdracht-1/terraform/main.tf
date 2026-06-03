@@ -11,6 +11,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+
   subscription_id                 = var.subscription_id
   resource_provider_registrations = "none"
 }
@@ -36,6 +37,13 @@ resource "azurerm_public_ip" "web_pip" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
+
+  tags = {
+    project     = "les-05"
+    opdracht   = "opdracht-1"
+    role        = "webserver"
+    environment = "test"
+  }
 }
 
 resource "azurerm_network_interface" "web_nic" {
@@ -49,41 +57,12 @@ resource "azurerm_network_interface" "web_nic" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.web_pip.id
   }
-}
 
-resource "azurerm_linux_virtual_machine" "webserver" {
-  name                = var.vm_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
-  size                = var.vm_size
-  admin_username      = var.admin_username
-
-  network_interface_ids = [
-    azurerm_network_interface.web_nic.id
-  ]
-
-  disable_password_authentication = true
-
-  admin_ssh_key {
-    username   = var.admin_username
-    public_key = local.ssh_public_key
-  }
-
-  custom_data = base64encode(templatefile("${path.module}/cloudinit.tftpl", {
-    username       = var.admin_username
-    ssh_public_key = local.ssh_public_key
-  }))
-
-  os_disk {
-    caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
-  }
-
-  source_image_reference {
-    publisher = "Canonical"
-    offer     = "ubuntu-24_04-lts"
-    sku       = "server"
-    version   = "latest"
+  tags = {
+    project     = "les-05"
+    opdracht   = "opdracht-1"
+    role        = "webserver"
+    environment = "test"
   }
 }
 
@@ -128,4 +107,18 @@ resource "azurerm_linux_virtual_machine" "webserver" {
     role        = "webserver"
     environment = "test"
   }
+}
+
+resource "local_file" "ansible_inventory" {
+  filename = "${path.module}/../ansible/inventory.ini"
+
+  content = <<-EOT
+[webservers]
+${azurerm_linux_virtual_machine.webserver.name} ansible_host=${azurerm_public_ip.web_pip.ip_address}
+
+[all:vars]
+ansible_user=${var.admin_username}
+ansible_ssh_private_key_file=${var.ssh_private_key_path}
+ansible_python_interpreter=/usr/bin/python3
+EOT
 }
