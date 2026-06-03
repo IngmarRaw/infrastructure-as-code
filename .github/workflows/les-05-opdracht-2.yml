@@ -5,7 +5,15 @@ on:
   push:
     branches:
       - test
+    paths:
+      - "les-05/opdracht-2/**"
+      - "les-05/opdracht-1/terraform/**"
+      - ".github/workflows/les-05-opdracht-2.yml"
   workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
 
 jobs:
   syntax-check:
@@ -16,19 +24,41 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Genereer tijdelijke inventory vanuit GitHub Secret
-        working-directory: les-05/opdracht-2
+      - name: Login op Azure met OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Initialiseer Terraform remote state
+        working-directory: les-05/opdracht-1/terraform
+        run: |
+          set -euo pipefail
+          terraform init -reconfigure
+
+      - name: Genereer tijdelijke Ansible inventory vanuit Terraform outputs
         run: |
           set -euo pipefail
 
-          cat > inventory.ini <<'EOF'
-          ${{ secrets.ANSIBLE_INVENTORY }}
+          WEB_NAME=$(terraform -chdir=les-05/opdracht-1/terraform output -raw webserver_name)
+          WEB_IP=$(terraform -chdir=les-05/opdracht-1/terraform output -raw webserver_public_ip)
+
+          test -n "$WEB_NAME"
+          test -n "$WEB_IP"
+
+          cat > les-05/opdracht-2/inventory.ini <<EOF
+          [webservers]
+          ${WEB_NAME} ansible_host=${WEB_IP}
+
+          [all:vars]
+          ansible_user=iacuser
+          ansible_ssh_private_key_file=~/.ssh/id_ed25519
+          ansible_python_interpreter=/usr/bin/python3
           EOF
 
-          test -s inventory.ini
-
-          echo "Inventory is aangemaakt. Groepen:"
-          grep '^\[' inventory.ini
+          echo "Inventory is tijdelijk gegenereerd vanuit Terraform outputs:"
+          grep '^\[' les-05/opdracht-2/inventory.ini
 
       - name: Toon Ansible versie
         run: ansible --version
@@ -46,21 +76,43 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Genereer tijdelijke inventory vanuit GitHub Secret
-        working-directory: les-05/opdracht-2
+      - name: Login op Azure met OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Initialiseer Terraform remote state
+        working-directory: les-05/opdracht-1/terraform
+        run: |
+          set -euo pipefail
+          terraform init -reconfigure
+
+      - name: Genereer tijdelijke Ansible inventory vanuit Terraform outputs
         run: |
           set -euo pipefail
 
-          cat > inventory.ini <<'EOF'
-          ${{ secrets.ANSIBLE_INVENTORY }}
+          WEB_NAME=$(terraform -chdir=les-05/opdracht-1/terraform output -raw webserver_name)
+          WEB_IP=$(terraform -chdir=les-05/opdracht-1/terraform output -raw webserver_public_ip)
+
+          test -n "$WEB_NAME"
+          test -n "$WEB_IP"
+
+          cat > les-05/opdracht-2/inventory.ini <<EOF
+          [webservers]
+          ${WEB_NAME} ansible_host=${WEB_IP}
+
+          [all:vars]
+          ansible_user=iacuser
+          ansible_ssh_private_key_file=~/.ssh/id_ed25519
+          ansible_python_interpreter=/usr/bin/python3
           EOF
 
-          test -s inventory.ini
+          echo "Inventory is tijdelijk gegenereerd vanuit Terraform outputs:"
+          grep '^\[' les-05/opdracht-2/inventory.ini
 
-          echo "Inventory is aangemaakt. Groepen:"
-          grep '^\[' inventory.ini
-
-      - name: Controleer bereikbaarheid webservers
+      - name: Controleer bereikbaarheid webserver
         working-directory: les-05/opdracht-2
         run: ansible -i inventory.ini webservers -m ping
 
