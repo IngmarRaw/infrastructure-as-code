@@ -5,7 +5,9 @@ auth_source: cli
 include_vm_resource_groups:
   - S1073133
 
-conditional_groups:
-  webservers: tags.role == 'webserver' and tags.project == 'les-05'
-
 plain_host_names: true
+
+keyed_groups:
+  - key: tags.role
+    prefix: role
+    separator: "_"
