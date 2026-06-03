@@ -11,3 +11,7 @@ keyed_groups:
   - key: tags.role
     prefix: role
     separator: "_"
+
+compose:
+  vm_tags: tags
+  vm_name: name
