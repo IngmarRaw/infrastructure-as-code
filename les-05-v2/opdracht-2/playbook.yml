@@ -1,0 +1,7 @@
+---
+- name: Opdracht 2 - Installeer package via CI/CD
+  hosts: webservers
+  become: true
+
+  roles:
+    - package_install
