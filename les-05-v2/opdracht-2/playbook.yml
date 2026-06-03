@@ -1,6 +1,6 @@
 ---
 - name: Opdracht 2 - Installeer package via CI/CD
-  hosts: webservers
+  hosts: role_webservers
   become: true
 
   roles:
