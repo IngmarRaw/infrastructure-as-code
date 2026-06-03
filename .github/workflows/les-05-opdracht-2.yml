@@ -6,7 +6,7 @@ on:
     branches:
       - test
     paths:
-      - "les-05/opdracht-2/**"
+      - "les-05-v2/opdracht-2/**"
       - ".github/workflows/les-05-opdracht-2.yml"
   workflow_dispatch:
 
@@ -19,22 +19,20 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Toon Azure account
+      - name: Controleer Azure login
         run: az account show
 
-      - name: Installeer Ansible Azure collection
-        run: ansible-galaxy collection install -r les-05/opdracht-2/requirements.yml
-
-      - name: Installeer Azure collection dependencies
-        run: pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
-
       - name: Controleer dynamic inventory
-        working-directory: les-05/opdracht-2
-        run: ansible-inventory -i inventory.azure_rm.yml --graph
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-inventory -i inventory.azure_rm.yml --graph
 
       - name: Controleer playbook syntax
-        working-directory: les-05/opdracht-2
-        run: ansible-playbook playbook.yml --syntax-check
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-playbook -i inventory.azure_rm.yml playbook.yml --syntax-check
 
   deploy:
     name: Voer Ansible playbook uit
@@ -45,19 +43,17 @@ jobs:
       - name: Haal repository op
         uses: actions/checkout@v5
 
-      - name: Toon Azure account
+      - name: Controleer Azure login
         run: az account show
 
-      - name: Installeer Ansible Azure collection
-        run: ansible-galaxy collection install -r les-05/opdracht-2/requirements.yml
-
-      - name: Installeer Azure collection dependencies
-        run: pip install -r ~/.ansible/collections/ansible_collections/azure/azcollection/requirements-azure.txt
-
       - name: Controleer bereikbaarheid webservers
-        working-directory: les-05/opdracht-2
-        run: ansible webservers -m ping
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible -i inventory.azure_rm.yml webservers -m ping
 
       - name: Draai Ansible playbook
-        working-directory: les-05/opdracht-2
-        run: ansible-playbook playbook.yml
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-playbook -i inventory.azure_rm.yml playbook.yml
