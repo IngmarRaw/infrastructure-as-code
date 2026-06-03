@@ -1,0 +1,60 @@
+---
+name: Les 05 - Opdracht 3 Terraform CI/CD
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - "les-05-v2/opdracht-3/terraform/**/*.tf"
+      - "les-05-v2/opdracht-3/terraform/**/*.tftpl"
+      - ".github/workflows/les-05-opdracht-3-terraform.yml"
+  workflow_dispatch:
+
+jobs:
+  terraform-check:
+    name: Controleer Terraform code
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v5
+
+      - name: Controleer Azure login
+        run: az account show
+
+      - name: Terraform fmt check
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform init -reconfigure
+
+      - name: Terraform validate
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform validate
+
+      - name: Terraform plan
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform plan
+
+  terraform-apply:
+    name: Deploy infrastructuur
+    runs-on: self-hosted
+    needs: terraform-check
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v5
+
+      - name: Controleer Azure login
+        run: az account show
+
+      - name: Terraform init
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform init -reconfigure
+
+      - name: Terraform apply
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform apply -auto-approve

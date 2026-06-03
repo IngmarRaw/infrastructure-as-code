@@ -1,0 +1,25 @@
+---
+name: Les 05 - Opdracht 3 Destroy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform-destroy:
+    name: Verwijder infrastructuur
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v5
+
+      - name: Controleer Azure login
+        run: az account show
+
+      - name: Terraform init
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform init -reconfigure
+
+      - name: Terraform destroy
+        working-directory: les-05-v2/opdracht-3/terraform
+        run: terraform destroy -auto-approve

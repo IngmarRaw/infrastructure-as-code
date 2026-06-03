@@ -1,0 +1,12 @@
+subscription_id       = "[redacted]"
+resource_group_name  = "S1073133"
+location             = "westeurope"
+
+virtual_network_name = "[redacted]"
+subnet_name          = "[redacted]"
+
+vm_name              = "les05-opdracht3-vm"
+vm_size              = "Standard_DS1_v2"
+admin_username       = "iacuser"
+
+ssh_public_key_path  = "~/.ssh/id_ed25519.pub"

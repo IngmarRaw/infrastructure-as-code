@@ -7,5 +7,6 @@ terraform.tfvars
 *.tfplan
 inventory.ini
 *.retry
+backend.tf
 __pycache__/
 EOF**/.DS_Store
