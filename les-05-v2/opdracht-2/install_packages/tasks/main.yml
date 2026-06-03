@@ -2,25 +2,65 @@
 - name: Update apt cache
   ansible.builtin.apt:
     update_cache: true
-    cache_valid_time: "{{ package_install_cache_valid_time }}"
+    cache_valid_time: 3600
 
-- name: Installeer package
+- name: Installeer nuttige webserver packages
   ansible.builtin.apt:
-    name: "{{ package_install_name }}"
+    name: "{{ webserver_packages }}"
     state: present
-  notify: Restart package service
+  notify: Restart webserver service
 
-- name: Zorg dat service gestart en enabled is
+- name: Zorg dat document root bestaat
+  ansible.builtin.file:
+    path: "{{ webserver_document_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Plaats eenvoudige webpagina
+  ansible.builtin.copy:
+    dest: "{{ webserver_document_root }}/{{ webserver_index_file }}"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+    content: |
+      <!DOCTYPE html>
+      <html lang="nl">
+      <head>
+          <meta charset="UTF-8">
+          <title>Les 05 - Opdracht 2</title>
+      </head>
+      <body>
+          <h1>CI/CD deployment succesvol</h1>
+          <p>Deze webserver is geconfigureerd met Ansible via GitHub Actions.</p>
+          <p>Host: {{ inventory_hostname }}</p>
+      </body>
+      </html>
+  notify: Restart webserver service
+
+- name: Zorg dat webserver service gestart en enabled is
   ansible.builtin.service:
-    name: "{{ package_install_service }}"
+    name: "{{ webserver_service }}"
     state: started
     enabled: true
 
-- name: Controleer service status
-  ansible.builtin.command: "systemctl is-active {{ package_install_service }}"
-  register: package_service_status
+- name: Controleer of webserver service actief is
+  ansible.builtin.command: "systemctl is-active {{ webserver_service }}"
+  register: webserver_status
   changed_when: false
 
-- name: Toon service status
+- name: Toon webserver status
   ansible.builtin.debug:
-    msg: "{{ package_install_service }} status op {{ inventory_hostname }}: {{ package_service_status.stdout }}"
+    msg: "{{ webserver_service }} status op {{ inventory_hostname }}: {{ webserver_status.stdout }}"
+
+- name: Controleer lokale HTTP response
+  ansible.builtin.uri:
+    url: "http://localhost"
+    method: GET
+    status_code: 200
+  register: http_check
+
+- name: Toon HTTP controle resultaat
+  ansible.builtin.debug:
+    msg: "HTTP controle op {{ inventory_hostname }} is geslaagd met status {{ http_check.status }}."

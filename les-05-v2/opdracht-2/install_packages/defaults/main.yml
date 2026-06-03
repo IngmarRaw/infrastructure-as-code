@@ -1,4 +1,11 @@
 ---
-package_install_name: nginx
-package_install_service: nginx
-package_install_cache_valid_time: 3600
+webserver_packages:
+  - nginx
+  - curl
+  - unzip
+  - htop
+  - net-tools
+
+webserver_service: nginx
+webserver_document_root: /var/www/html
+webserver_index_file: index.html

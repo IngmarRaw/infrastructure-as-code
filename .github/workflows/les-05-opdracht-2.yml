@@ -82,3 +82,15 @@ jobs:
         run: |
           source ~/venvs/ansible-azure/bin/activate
           ansible-playbook -i inventory.azure_rm.yml playbook.yml
+
+      - name: Controleer webserver service na deployment
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible -i inventory.azure_rm.yml role_webserver -b -m command -a "systemctl is-active nginx"
+
+      - name: Controleer HTTP response op de webserver
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible -i inventory.azure_rm.yml role_webserver -b -m uri -a "url=http://localhost method=GET status_code=200"
