@@ -11,6 +11,17 @@ on:
       - ".github/workflows/les-05-opdracht-3-terraform.yml"
   workflow_dispatch:
 
+env:
+  TF_VAR_subscription_id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  TF_VAR_resource_group_name: ${{ secrets.AZURE_RESOURCE_GROUP_NAME }}
+  TF_VAR_location: ${{ secrets.AZURE_LOCATION }}
+  TF_VAR_virtual_network_name: ${{ secrets.AZURE_VIRTUAL_NETWORK_NAME }}
+  TF_VAR_subnet_name: ${{ secrets.AZURE_SUBNET_NAME }}
+  TF_VAR_vm_name: ${{ secrets.AZURE_VM_NAME }}
+  TF_VAR_vm_size: ${{ secrets.AZURE_VM_SIZE }}
+  TF_VAR_admin_username: ${{ secrets.AZURE_ADMIN_USERNAME }}
+  TF_VAR_ssh_public_key_path: ${{ secrets.AZURE_SSH_PUBLIC_KEY_PATH }}
+
 jobs:
   terraform-check:
     name: Controleer Terraform code
@@ -29,7 +40,7 @@ jobs:
 
       - name: Terraform init
         working-directory: les-05-v2/opdracht-3/terraform
-        run: terraform init -reconfigure
+        run: terraform init -reconfigure -input=false
 
       - name: Terraform validate
         working-directory: les-05-v2/opdracht-3/terraform
@@ -37,7 +48,7 @@ jobs:
 
       - name: Terraform plan
         working-directory: les-05-v2/opdracht-3/terraform
-        run: terraform plan
+        run: terraform plan -input=false
 
   terraform-apply:
     name: Deploy infrastructuur
@@ -53,8 +64,8 @@ jobs:
 
       - name: Terraform init
         working-directory: les-05-v2/opdracht-3/terraform
-        run: terraform init -reconfigure
+        run: terraform init -reconfigure -input=false
 
       - name: Terraform apply
         working-directory: les-05-v2/opdracht-3/terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve -input=false
