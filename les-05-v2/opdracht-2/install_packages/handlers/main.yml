@@ -1,5 +1,5 @@
 ---
-- name: Restart package service
+- name: Restart webserver service
   ansible.builtin.service:
-    name: "{{ package_install_service }}"
+    name: "{{ webserver_service }}"
     state: restarted
