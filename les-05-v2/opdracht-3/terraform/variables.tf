@@ -54,8 +54,8 @@ variable "tags" {
 
   default = {
     project     = "les-05"
-    opdracht   = "opdracht-3"
-    managed_by = "terraform"
+    opdracht    = "opdracht-3"
+    managed_by  = "terraform"
     environment = "test"
   }
 }
