@@ -87,16 +87,45 @@ resource "azurerm_linux_virtual_machine" "webserver" {
   }
 }
 
-resource "local_file" "ansible_inventory" {
-  filename = "${path.module}/../ansible/inventory.ini"
+resource "azurerm_linux_virtual_machine" "webserver" {
+  name                = var.vm_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  size                = var.vm_size
+  admin_username      = var.admin_username
 
-  content = <<-EOT
-[webservers]
-${azurerm_linux_virtual_machine.webserver.name} ansible_host=${azurerm_public_ip.web_pip.ip_address}
+  network_interface_ids = [
+    azurerm_network_interface.web_nic.id
+  ]
 
-[all:vars]
-ansible_user=${var.admin_username}
-ansible_ssh_private_key_file=${var.ssh_private_key_path}
-ansible_python_interpreter=/usr/bin/python3
-EOT
+  disable_password_authentication = true
+
+  admin_ssh_key {
+    username   = var.admin_username
+    public_key = local.ssh_public_key
+  }
+
+  custom_data = base64encode(templatefile("${path.module}/cloudinit.tftpl", {
+    username       = var.admin_username
+    ssh_public_key = local.ssh_public_key
+  }))
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "ubuntu-24_04-lts"
+    sku       = "server"
+    version   = "latest"
+  }
+
+  tags = {
+    project     = "les-05"
+    opdracht   = "opdracht-2"
+    role        = "webserver"
+    environment = "test"
+  }
 }
