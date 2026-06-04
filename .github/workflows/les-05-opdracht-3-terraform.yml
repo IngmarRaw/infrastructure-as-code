@@ -56,7 +56,7 @@ jobs:
         run: terraform plan -input=false -out=tfplan
 
       - name: Upload Terraform plan artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: opdracht-3-tfplan
           path: les-05-v2/opdracht-3/terraform/tfplan
