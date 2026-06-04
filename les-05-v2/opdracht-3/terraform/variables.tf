@@ -24,10 +24,21 @@ variable "subnet_name" {
   type        = string
 }
 
-variable "vm_name" {
-  description = "Naam van de Azure VM"
+variable "vm_name_prefix" {
+  description = "Prefix voor de Azure VM namen"
   type        = string
-  default     = "les05-opdracht3-vm"
+  default     = "webserver"
+}
+
+variable "vm_count" {
+  description = "Aantal webservers dat moet worden aangemaakt"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.vm_count >= 1 && var.vm_count <= 3
+    error_message = "vm_count moet tussen 1 en 3 liggen."
+  }
 }
 
 variable "vm_size" {

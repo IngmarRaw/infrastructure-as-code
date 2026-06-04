@@ -17,7 +17,6 @@ env:
   TF_VAR_location: ${{ vars.AZURE_LOCATION }}
   TF_VAR_virtual_network_name: ${{ secrets.AZURE_VIRTUAL_NETWORK_NAME }}
   TF_VAR_subnet_name: ${{ secrets.AZURE_SUBNET_NAME }}
-  TF_VAR_vm_name: ${{ vars.AZURE_VM_NAME }}
   TF_VAR_vm_size: ${{ vars.AZURE_VM_SIZE }}
   TF_VAR_admin_username: ${{ secrets.AZURE_ADMIN_USERNAME }}
   TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
