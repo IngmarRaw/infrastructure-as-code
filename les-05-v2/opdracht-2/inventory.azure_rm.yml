@@ -7,11 +7,5 @@ include_vm_resource_groups:
 
 plain_host_names: true
 
-keyed_groups:
-  - key: tags.role
-    prefix: role
-    separator: "_"
-
-compose:
-  vm_tags: tags
-  vm_name: name
+conditional_groups:
+  role_webserver: "'role' in tags and tags.role == 'webserver' and 'project' in tags and tags.project == 'les-05'"
