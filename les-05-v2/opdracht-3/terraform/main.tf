@@ -39,13 +39,13 @@ data "azurerm_subnet" "subnet" {
 }
 
 resource "azurerm_public_ip" "vm_pip" {
-  for_each = local.webservers
+  for_each            = local.webservers
   name                = "pip-${each.value.name}"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   sku                 = "Standard"
-  tags = var.tags
+  tags                = var.tags
 }
 
 resource "azurerm_network_interface" "vm_nic" {

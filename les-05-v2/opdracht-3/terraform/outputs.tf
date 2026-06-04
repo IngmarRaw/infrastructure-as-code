@@ -5,7 +5,7 @@ output "vm_names" {
 
 output "public_ip_addresses" {
   description = "Publieke IP-adressen van de aangemaakte Azure VM's"
-  value       = {
+  value = {
     for name, pip in azurerm_public_ip.vm_pip :
     name => pip.ip_address
   }
