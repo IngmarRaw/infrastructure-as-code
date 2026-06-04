@@ -19,6 +19,7 @@ env:
   TF_VAR_vm_size: ${{ vars.AZURE_VM_SIZE }}
   TF_VAR_admin_username: ${{ secrets.AZURE_ADMIN_USERNAME }}
   TF_VAR_ssh_public_key: ${{ secrets.AZURE_SSH_PUBLIC_KEY }}
+  TF_VAR_ssh_public_key_path: ${{ secrets.AZURE_SSH_PUBLIC_KEY_PATH }}
 
 jobs:
   terraform-destroy:
