@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Haal repository op
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Controleer Azure login
         run: az account show
