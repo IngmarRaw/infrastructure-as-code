@@ -1,0 +1,11 @@
+esxi_hostname   = "esxi-host"
+esxi_username   = "root"
+esxi_password   = "password"
+disk_store      = "datastore-name"
+virtual_network = "VM Network"
+ovf_source      = "/path/to/ubuntu-cloud-image.ova"
+
+vm_name        = "les06-esxi-vm"
+admin_username = "adminuser"
+
+ssh_public_key_path = "~/.ssh/id_ed25519.pub"

@@ -1,0 +1,12 @@
+subscription_id       = "00000000-0000-0000-0000-000000000000"
+resource_group_name  = "resource-group-name"
+location             = "westeurope"
+
+virtual_network_name = "vnet-name"
+subnet_name          = "subnet-name"
+
+vm_name              = "les06-azure-vm"
+vm_size              = "Standard_DS1_v2"
+admin_username       = "adminuser"
+
+ssh_public_key_path  = "~/.ssh/id_ed25519.pub"
