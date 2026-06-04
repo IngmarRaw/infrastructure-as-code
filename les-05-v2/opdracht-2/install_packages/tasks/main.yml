@@ -65,3 +65,4 @@
 - name: Toon HTTP controle resultaat
   ansible.builtin.debug:
     msg: "HTTP controle op {{ inventory_hostname }} is geslaagd met status {{ http_check.status }}."
+    
