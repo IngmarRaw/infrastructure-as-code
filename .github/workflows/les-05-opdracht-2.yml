@@ -12,12 +12,12 @@ on:
 
 jobs:
   syntax-check:
-    name: Controleer Ansible syntax
+    name: Controleer Ansible code
     runs-on: self-hosted
 
     steps:
       - name: Haal repository op
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Controleer runner context
         working-directory: les-05-v2/opdracht-2
@@ -27,20 +27,31 @@ jobs:
           pwd
           ls -la
           ls -la group_vars || true
-          cat inventory.azure_rm.yml
-          cat group_vars/role_webserver.yml
 
       - name: Controleer Azure login
         run: az account show
+
+      - name: Activeer Ansible virtual environment
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible --version
+
+      - name: Installeer lint tools indien nodig
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          python -m pip install --upgrade yamllint ansible-lint
+
+      - name: Voer ansible-lint uit
+        working-directory: les-05-v2/opdracht-2
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-lint playbook.yml
 
       - name: Controleer dynamic inventory
         working-directory: les-05-v2/opdracht-2
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          which ansible
-          ansible --version
           ansible-inventory -i inventory.azure_rm.yml --graph
-          ansible-inventory -i inventory.azure_rm.yml --host les05-webserver
 
       - name: Controleer playbook syntax
         working-directory: les-05-v2/opdracht-2
@@ -56,17 +67,6 @@ jobs:
     steps:
       - name: Haal repository op
         uses: actions/checkout@v5
-
-      - name: Controleer runner context
-        working-directory: les-05-v2/opdracht-2
-        run: |
-          echo "User: $(whoami)"
-          echo "Home: $HOME"
-          pwd
-          ls -la
-          ls -la group_vars || true
-          cat inventory.azure_rm.yml
-          cat group_vars/role_webserver.yml
 
       - name: Controleer Azure login
         run: az account show

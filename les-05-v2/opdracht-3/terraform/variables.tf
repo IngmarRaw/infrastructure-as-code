@@ -43,9 +43,9 @@ variable "admin_username" {
 }
 
 variable "ssh_public_key_path" {
-  description = "Pad naar de SSH public key"
+  description = "Pad naar de SSH public key op de self-hosted runner"
   type        = string
-  default     = "~/.ssh/id_ed25519.pub"
+  sensitive   = true
 }
 
 variable "tags" {
