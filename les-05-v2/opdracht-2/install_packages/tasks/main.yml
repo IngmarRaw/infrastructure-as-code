@@ -45,14 +45,15 @@
     state: started
     enabled: true
 
-- name: Controleer of webserver service actief is
-  ansible.builtin.command: "systemctl is-active {{ webserver_service }}"
-  register: webserver_status
-  changed_when: false
+- name: Verzamel service facts
+  ansible.builtin.service_facts:
 
-- name: Toon webserver status
-  ansible.builtin.debug:
-    msg: "{{ webserver_service }} status op {{ inventory_hostname }}: {{ webserver_status.stdout }}"
+- name: Controleer of webserver service actief is
+  ansible.builtin.assert:
+    that:
+      - ansible_facts.services[webserver_service + '.service'].state == "running"
+    success_msg: "{{ webserver_service }} draait op {{ inventory_hostname }}."
+    fail_msg: "{{ webserver_service }} draait niet op {{ inventory_hostname }}."
 
 - name: Controleer lokale HTTP response
   ansible.builtin.uri:
