@@ -16,6 +16,3 @@
     status_code: 200
   register: hello_container_http_check
 
-- name: Toon container controle
-  ansible.builtin.debug:
-    msg: "Container {{ hello_container_name }} draait op {{ inventory_hostname }} met HTTP status {{ hello_container_http_check.status }}."
