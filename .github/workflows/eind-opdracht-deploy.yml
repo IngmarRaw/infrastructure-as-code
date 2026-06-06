@@ -68,6 +68,18 @@ jobs:
           source ~/venvs/ansible-azure/bin/activate
           ansible-galaxy install -r requirements.yml --force
 
+      - name: Installeer ansible-lint
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          python -m pip install --upgrade ansible-lint
+
+      - name: Voer ansible-lint uit
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-lint playbook.yml
+
       - name: Terraform fmt Azure
         working-directory: eind-opdracht/terraform/azure
         run: terraform fmt -check -recursive
