@@ -40,7 +40,7 @@ jobs:
           AZURE_VIRTUAL_NETWORK_NAME: op://IAC/Azure/virtual_network_name
           AZURE_SUBNET_NAME: op://IAC/Azure/subnet_name
           AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
-          AZURE_SSH_PUBLIC_KEY_PATH: op://IAC/Azure/ssh_public_key_path
+          AZURE_SSH_PUBLIC_KEY: op://IAC/Azure/ssh_public_key
           AZURE_LOCATION: op://IAC/Azure/location
           AZURE_VM_SIZE: op://IAC/Azure/vm_size
 
@@ -78,7 +78,7 @@ jobs:
           TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
           TF_VAR_vm_name: eindopdracht-esxi-vm
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
-          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform plan -destroy -input=false -out=tfdestroyplan
 
       - name: Terraform destroy apply ESXi
@@ -92,7 +92,7 @@ jobs:
           TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
           TF_VAR_vm_name: eindopdracht-esxi-vm
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
-          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform apply -input=false -auto-approve tfdestroyplan
 
       - name: Terraform init Azure
@@ -115,7 +115,7 @@ jobs:
           TF_VAR_vm_name: eindopdracht-azure-vm
           TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
-          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform plan -destroy -input=false -out=tfdestroyplan
 
       - name: Terraform destroy apply Azure
@@ -129,5 +129,5 @@ jobs:
           TF_VAR_vm_name: eindopdracht-azure-vm
           TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
-          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform apply -input=false -auto-approve tfdestroyplan
