@@ -180,18 +180,22 @@ jobs:
           TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
         run: terraform apply -input=false -auto-approve tfplan
 
-      - name: Genereer ESXi inventory uit Terraform output
+      - name: Genereer Azure dynamic inventory
         working-directory: eind-opdracht
         run: |
-          ESXI_VM_NAME=$(terraform -chdir=terraform/esxi output -raw esxi_vm_name)
-          ESXI_VM_IP=$(terraform -chdir=terraform/esxi output -raw esxi_vm_ip)
+          cat > ansible/inventory.azure_rm.yml <<EOF
+          ---
+          plugin: azure.azcollection.azure_rm
+          auth_source: cli
 
-          cat > ansible/inventory.esxi.ini <<EOF
-          [platform_esxi]
-          ${ESXI_VM_NAME} ansible_host=${ESXI_VM_IP}
+          include_vm_resource_groups:
+            - ${AZURE_RESOURCE_GROUP_NAME}
 
-          [docker_hosts:children]
-          platform_esxi
+          plain_host_names: true
+
+          conditional_groups:
+            platform_azure: "'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'"
+            docker_hosts: "'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'"
           EOF
 
       - name: Controleer inventories
