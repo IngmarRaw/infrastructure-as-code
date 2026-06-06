@@ -1,0 +1,10 @@
+eind-opdracht/ansible/inventory.esxi.ini
+eind-opdracht/**/terraform.tfvars
+eind-opdracht/**/.terraform/
+*.tfstate
+*.tfstate.*
+**/tfplan
+**/tfdestroyplan
+*.retry
+*.swp
+.DS_Store

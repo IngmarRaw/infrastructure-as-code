@@ -1,0 +1,5 @@
+[platform_esxi]
+eindopdracht-esxi-vm ansible_host=192.168.1.
+
+[docker_hosts:children]
+platform_esxi

@@ -1,0 +1,210 @@
+---
+name: Eindopdracht - Configure Hosts
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ansible:
+    name: Configureer Azure en ESXi hosts
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Configureer 1Password
+        uses: 1password/load-secrets-action/configure@v2
+        with:
+          service-account-token: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+
+      - name: Laad secrets uit 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          AZURE_RESOURCE_GROUP_NAME: op://IAC/Azure/resource_group_name
+          AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
+
+          ADMIN_SSH_PRIVATE_KEY: op://IAC/SSH/admin_private_key
+
+          TESTUSER_PUBLIC_KEY: op://IAC/Testuser/public_key
+          TESTUSER_PRIVATE_KEY: op://IAC/Testuser/private_key
+
+          TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
+          TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
+          TF_BACKEND_CONTAINER_NAME: op://IAC/TerraformBackend/container_name
+
+          HELLO_CONTAINER_IMAGE: op://IAC/Container/image
+
+      - name: Controleer verplichte Ansible variabelen
+        run: |
+          test -n "$AZURE_RESOURCE_GROUP_NAME"
+          test -n "$AZURE_ADMIN_USERNAME"
+          test -n "$ADMIN_SSH_PRIVATE_KEY"
+          test -n "$TESTUSER_PUBLIC_KEY"
+          test -n "$TESTUSER_PRIVATE_KEY"
+          test -n "$TF_BACKEND_RESOURCE_GROUP_NAME"
+          test -n "$TF_BACKEND_STORAGE_ACCOUNT_NAME"
+          test -n "$TF_BACKEND_CONTAINER_NAME"
+          test -n "$HELLO_CONTAINER_IMAGE"
+
+      - name: Controleer Azure login
+        run: az account show > /dev/null
+
+      - name: Installeer Ansible requirements
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-galaxy install -r requirements.yml --force
+
+      - name: Controleer ansible-lint
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+
+          if command -v ansible-lint >/dev/null 2>&1; then
+            ansible-lint --version
+          else
+            python -m pip install --quiet ansible-lint
+            ansible-lint --version
+          fi
+
+      - name: Voer ansible-lint uit
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-lint playbook.yml
+
+      - name: Terraform init ESXi voor outputs
+        working-directory: eind-opdracht/terraform/esxi
+        run: |
+          terraform init -reconfigure -input=false \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+            -backend-config="key=eind-opdracht-esxi.tfstate"
+
+      - name: Genereer Azure dynamic inventory
+        working-directory: eind-opdracht
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          resource_group = os.environ.get("AZURE_RESOURCE_GROUP_NAME", "").strip()
+          if not resource_group:
+              raise SystemExit("AZURE_RESOURCE_GROUP_NAME is leeg.")
+
+          lines = [
+              "---",
+              "plugin: azure.azcollection.azure_rm",
+              "auth_source: cli",
+              "",
+              "include_vm_resource_groups:",
+              f"  - {resource_group}",
+              "",
+              "plain_host_names: true",
+              "",
+              "conditional_groups:",
+              "  platform_azure: \"'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'\"",
+              "  docker_hosts: \"'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'\"",
+              "",
+          ]
+
+          path = Path("ansible/inventory.azure_rm.yml")
+          path.write_text("\n".join(lines), encoding="utf-8")
+          path.chmod(0o600)
+          PY
+
+      - name: Genereer ESXi inventory uit Terraform output
+        working-directory: eind-opdracht
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+          from pathlib import Path
+
+          def terraform_json_output(name: str):
+              result = subprocess.run(
+                  ["terraform", "-chdir=terraform/esxi", "output", "-json", name],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+              return json.loads(result.stdout)
+
+          esxi_vm_ips = terraform_json_output("esxi_vm_ips")
+
+          if not esxi_vm_ips:
+              raise SystemExit("Geen ESXi VM IP's gevonden.")
+
+          host_lines = []
+          for vm_name, vm_ip in esxi_vm_ips.items():
+              if not vm_ip or vm_ip == "null":
+                  raise SystemExit("ESXi VM IP is leeg of null.")
+              host_lines.append(f"{vm_name} ansible_host={vm_ip}")
+
+          lines = []
+          lines.append("[platform_esxi]")
+          lines.extend(host_lines)
+          lines.append("")
+          lines.append("[docker_hosts:children]")
+          lines.append("platform_esxi")
+          lines.append("")
+
+          path = Path("ansible/inventory.esxi.ini")
+          path.write_text("\n".join(lines), encoding="utf-8")
+          path.chmod(0o600)
+          PY
+
+      - name: Controleer inventories
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-inventory -i inventory.azure_rm.yml -i inventory.esxi.ini --list > /dev/null
+
+      - name: Wacht tot SSH beschikbaar is
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible -i inventory.azure_rm.yml -i inventory.esxi.ini docker_hosts \
+            -m wait_for_connection \
+            -a "timeout=300"
+
+      - name: Voer Ansible playbook uit
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-playbook -i inventory.azure_rm.yml -i inventory.esxi.ini playbook.yml
+
+      - name: Test SSH van ESXi VM naar Azure VM als testuser
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-inventory -i inventory.azure_rm.yml --list > /tmp/eindopdracht_azure_inventory.json
+
+          AZURE_IP=$(python3 - <<'PY'
+          import json
+
+          with open("/tmp/eindopdracht_azure_inventory.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          azure_hosts = data.get("platform_azure", {}).get("hosts", [])
+          if not azure_hosts:
+              raise SystemExit("Geen Azure host gevonden in platform_azure")
+
+          host = azure_hosts[0]
+          hostvars = data.get("_meta", {}).get("hostvars", {}).get(host, {})
+          public_ips = hostvars.get("public_ipv4_addresses", [])
+
+          value = public_ips[0] if public_ips else hostvars.get("ansible_host", "")
+          if not value:
+              raise SystemExit("Geen Azure IP gevonden.")
+
+          print(value)
+          PY
+          )
+
+          ansible -i inventory.esxi.ini platform_esxi -b -m command \
+            -a "sudo -u testuser ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -i /home/testuser/.ssh/id_ed25519 testuser@${AZURE_IP} hostname"

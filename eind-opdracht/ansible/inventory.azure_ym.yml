@@ -1,0 +1,12 @@
+---
+plugin: azure.azcollection.azure_rm
+auth_source: cli
+
+include_vm_resource_groups:
+  - placeholder
+
+plain_host_names: true
+
+conditional_groups:
+  platform_azure: "'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'"
+  docker_hosts: "'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'"

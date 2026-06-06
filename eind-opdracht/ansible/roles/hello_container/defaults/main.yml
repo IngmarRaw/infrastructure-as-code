@@ -1,0 +1,4 @@
+---
+hello_container_name: "eindopdracht-hello-world"
+hello_container_image: "ghcr.io/ingmarraw/infrastructure-as-code/eind-opdracht-hello-world:latest"
+hello_container_port: "8080"

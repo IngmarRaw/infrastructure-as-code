@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: IngmarRaw
+  description: Maakt een testuser aan en configureert SSH-toegang tussen ESXi en Azure.
+  company: Windesheim
+  license: MIT
+  min_ansible_version: "2.14"
+
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+
+  galaxy_tags:
+    - ssh
+    - users
+    - linux
+    - hybridcloud
+
+dependencies: []
