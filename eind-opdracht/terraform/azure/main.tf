@@ -102,7 +102,7 @@ resource "azurerm_network_interface" "vm_nic" {
 }
 
 resource "azurerm_network_interface_security_group_association" "vm_nsg_association" {
-  for_each = local.instances
+  for_each                  = local.instances
   network_interface_id      = azurerm_network_interface.vm_nic[each.key].id
   network_security_group_id = azurerm_network_security_group.vm_nsg[each.key].id
 }
