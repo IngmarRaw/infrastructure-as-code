@@ -42,7 +42,7 @@ jobs:
           ADMIN_SSH_PRIVATE_KEY: op://IAC/SSH/admin_private_key
 
           TESTUSER_PUBLIC_KEY: op://IAC/Testuser/public_key
-          TESTUSER_PRIVATE_KEY_B64: op://IAC/Testuser/private_key_b64
+          TESTUSER_PRIVATE_KEY: op://IAC/Testuser/private_key
 
           TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
           TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
@@ -68,7 +68,7 @@ jobs:
           test -n "$ESXI_OVF_SOURCE"
           test -n "$ADMIN_SSH_PRIVATE_KEY"
           test -n "$TESTUSER_PUBLIC_KEY"
-          test -n "$TESTUSER_PRIVATE_KEY_B64"
+          test -n "$TESTUSER_PRIVATE_KEY"
           test -n "$TF_BACKEND_RESOURCE_GROUP_NAME"
           test -n "$TF_BACKEND_STORAGE_ACCOUNT_NAME"
           test -n "$TF_BACKEND_CONTAINER_NAME"
@@ -83,11 +83,17 @@ jobs:
           source ~/venvs/ansible-azure/bin/activate
           ansible-galaxy install -r requirements.yml --force
 
-      - name: Installeer ansible-lint
+      - name: Controleer ansible-lint
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          python -m pip install --upgrade ansible-lint
+
+          if command -v ansible-lint >/dev/null 2>&1; then
+            ansible-lint --version
+          else
+            python -m pip install --quiet ansible-lint
+            ansible-lint --version
+          fi
 
       - name: Voer ansible-lint uit
         working-directory: eind-opdracht/ansible

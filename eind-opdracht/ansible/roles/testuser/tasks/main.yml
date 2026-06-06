@@ -26,7 +26,7 @@
 - name: Plaats private key alleen op ESXi VM zodat testuser naar Azure kan SSH'en
   ansible.builtin.copy:
     dest: "/home/{{ testuser_name }}/.ssh/id_ed25519"
-    content: "{{ testuser_private_key_b64 | b64decode }}"
+    content: "{{ testuser_private_key | replace('\\n', '\n') | trim }}\n"
     owner: "{{ testuser_name }}"
     group: "{{ testuser_name }}"
     mode: "0600"
@@ -41,9 +41,4 @@
     mode: "0644"
   when: "'platform_esxi' in group_names"
 
-- name: Controleer testuser private key op ESXi VM
-  ansible.builtin.command:
-    cmd: "ssh-keygen -y -f /home/{{ testuser_name }}/.ssh/id_ed25519"
-  changed_when: false
-  no_log: true
-  when: "'platform_esxi' in group_names"
+
