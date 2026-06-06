@@ -42,7 +42,7 @@ jobs:
           ADMIN_SSH_PRIVATE_KEY: op://IAC/SSH/admin_private_key
 
           TESTUSER_PUBLIC_KEY: op://IAC/Testuser/public_key
-          TESTUSER_PRIVATE_KEY: op://IAC/Testuser/private_key
+          TESTUSER_PRIVATE_KEY_B64: op://IAC/Testuser/private_key_b64
 
           TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
           TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
@@ -68,7 +68,7 @@ jobs:
           test -n "$ESXI_OVF_SOURCE"
           test -n "$ADMIN_SSH_PRIVATE_KEY"
           test -n "$TESTUSER_PUBLIC_KEY"
-          test -n "$TESTUSER_PRIVATE_KEY"
+          test -n "$TESTUSER_PRIVATE_KEY_B64"
           test -n "$TF_BACKEND_RESOURCE_GROUP_NAME"
           test -n "$TF_BACKEND_STORAGE_ACCOUNT_NAME"
           test -n "$TF_BACKEND_CONTAINER_NAME"
