@@ -47,7 +47,22 @@ Beide systemen worden opgenomen in de Ansible groep docker_hosts. Daardoor kan d
 
 ## Directorystructuur
 
-text eind-opdracht/ ├── ansible/ │   ├── group_vars/ │   │   └── docker_hosts.yml │   ├── roles/ │   │   ├── hello_container/ │   │   └── testuser/ │   ├── playbook.yml │   └── requirements.yml ├── app/ │   ├── Dockerfile │   └── index.html ├── terraform/ │   ├── azure/ │   └── esxi/ └── README.md 
+ eind-opdracht/
+├── ansible/
+│   ├── group_vars/
+│   │   └── docker_hosts.yml
+│   ├── roles/
+│   │   ├── hello_container/
+│   │   └── testuser/
+│   ├── playbook.yml
+│   └── requirements.yml
+├── app/
+│   ├── Dockerfile
+│   └── index.html
+├── terraform/
+│   ├── azure/
+│   └── esxi/
+└── README.md
 
 ## CI/CD workflows
 
