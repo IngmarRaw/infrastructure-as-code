@@ -1,0 +1,15 @@
+---
+- name: Configureer Azure en ESXi VM's voor hybrid cloud deployment
+  hosts: docker_hosts
+  become: true
+
+  roles:
+    - role: testuser
+
+    - role: IngmarRaw.docker
+      vars:
+        docker_users:
+          - "{{ ansible_user }}"
+          - "{{ testuser_name }}"
+
+    - role: hello_container

@@ -1,0 +1,133 @@
+---
+name: Eindopdracht - Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_destroy:
+        description: "Typ DESTROY om de eindopdracht infrastructuur te verwijderen"
+        required: true
+        type: string
+
+jobs:
+  destroy:
+    name: Destroy Azure en ESXi infrastructuur
+    runs-on: self-hosted
+
+    steps:
+      - name: Controleer confirmatie
+        run: |
+          if [ "${{ github.event.inputs.confirm_destroy }}" != "DESTROY" ]; then
+            echo "Destroy is niet bevestigd. Typ exact DESTROY om door te gaan."
+            exit 1
+          fi
+
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Configureer 1Password
+        uses: 1password/load-secrets-action/configure@v2
+        with:
+          service-account-token: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+
+      - name: Laad secrets uit 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          AZURE_SUBSCRIPTION_ID: op://IAC/Azure/subscription_id
+          AZURE_RESOURCE_GROUP_NAME: op://IAC/Azure/resource_group_name
+          AZURE_VIRTUAL_NETWORK_NAME: op://IAC/Azure/virtual_network_name
+          AZURE_SUBNET_NAME: op://IAC/Azure/subnet_name
+          AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
+          AZURE_SSH_PUBLIC_KEY_PATH: op://IAC/Azure/ssh_public_key_path
+          AZURE_LOCATION: op://IAC/Azure/location
+          AZURE_VM_SIZE: op://IAC/Azure/vm_size
+
+          ESXI_HOSTNAME: op://IAC/ESXi/hostname
+          ESXI_USERNAME: op://IAC/ESXi/username
+          ESXI_PASSWORD: op://IAC/ESXi/password
+          ESXI_DATASTORE: op://IAC/ESXi/datastore
+          ESXI_NETWORK: op://IAC/ESXi/network
+          ESXI_OVF_SOURCE: op://IAC/ESXi/ovf_source
+
+          TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
+          TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
+          TF_BACKEND_CONTAINER_NAME: op://IAC/TerraformBackend/container_name
+
+      - name: Controleer Azure login
+        run: az account show
+
+      - name: Terraform init ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        run: |
+          terraform init -reconfigure -input=false \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+            -backend-config="key=eind-opdracht-esxi.tfstate"
+
+      - name: Terraform destroy plan ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        env:
+          TF_VAR_esxi_hostname: ${{ env.ESXI_HOSTNAME }}
+          TF_VAR_esxi_username: ${{ env.ESXI_USERNAME }}
+          TF_VAR_esxi_password: ${{ env.ESXI_PASSWORD }}
+          TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
+          TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
+          TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
+          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform plan -destroy -input=false -out=tfdestroyplan
+
+      - name: Terraform destroy apply ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        env:
+          TF_VAR_esxi_hostname: ${{ env.ESXI_HOSTNAME }}
+          TF_VAR_esxi_username: ${{ env.ESXI_USERNAME }}
+          TF_VAR_esxi_password: ${{ env.ESXI_PASSWORD }}
+          TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
+          TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
+          TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
+          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform apply -input=false -auto-approve tfdestroyplan
+
+      - name: Terraform init Azure
+        working-directory: eind-opdracht/terraform/azure
+        run: |
+          terraform init -reconfigure -input=false \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+            -backend-config="key=eind-opdracht-azure.tfstate"
+
+      - name: Terraform destroy plan Azure
+        working-directory: eind-opdracht/terraform/azure
+        env:
+          TF_VAR_subscription_id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
+          TF_VAR_location: ${{ env.AZURE_LOCATION }}
+          TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
+          TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
+          TF_VAR_vm_name: eindopdracht-azure-vm
+          TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform plan -destroy -input=false -out=tfdestroyplan
+
+      - name: Terraform destroy apply Azure
+        working-directory: eind-opdracht/terraform/azure
+        env:
+          TF_VAR_subscription_id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
+          TF_VAR_location: ${{ env.AZURE_LOCATION }}
+          TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
+          TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
+          TF_VAR_vm_name: eindopdracht-azure-vm
+          TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform apply -input=false -auto-approve tfdestroyplan

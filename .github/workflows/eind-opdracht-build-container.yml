@@ -1,0 +1,36 @@
+---
+name: Eindopdracht - Build Hello World Container
+
+on:
+  push:
+    branches:
+      - test
+    paths:
+      - "eind-opdracht/app/**"
+      - ".github/workflows/eind-opdracht-build-container.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/ingmarraw/infrastructure-as-code/eind-opdracht-hello-world
+
+jobs:
+  build-container:
+    name: Build en push Docker image
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Login op GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build Docker image
+        run: docker build -t "$IMAGE_NAME:latest" eind-opdracht/app
+
+      - name: Push Docker image
+        run: docker push "$IMAGE_NAME:latest"

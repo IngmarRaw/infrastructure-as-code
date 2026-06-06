@@ -1,10 +1,10 @@
-.DS_Store
-.terraform/
+eind-opdracht/ansible/inventory.esxi.ini
+eind-opdracht/**/terraform.tfvars
+eind-opdracht/**/.terraform/
 *.tfstate
 *.tfstate.*
-terraform.tfvars
-*.tfplan
-inventory.ini
+**/tfplan
+**/tfdestroyplan
 *.retry
-__pycache__/
-EOF**/.DS_Store
+*.swp
+.DS_Store

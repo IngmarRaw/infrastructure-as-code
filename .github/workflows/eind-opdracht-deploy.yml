@@ -1,0 +1,232 @@
+---
+name: Eindopdracht - Hybrid Cloud Deploy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy Azure, ESXi en Ansible configuratie
+    runs-on: self-hosted
+
+    steps:
+      - name: Haal repository op
+        uses: actions/checkout@v4
+
+      - name: Configureer 1Password
+        uses: 1password/load-secrets-action/configure@v2
+        with:
+          service-account-token: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
+
+      - name: Laad secrets uit 1Password
+        uses: 1password/load-secrets-action@v2
+        with:
+          export-env: true
+        env:
+          AZURE_SUBSCRIPTION_ID: op://IAC/Azure/subscription_id
+          AZURE_RESOURCE_GROUP_NAME: op://IAC/Azure/resource_group_name
+          AZURE_VIRTUAL_NETWORK_NAME: op://IAC/Azure/virtual_network_name
+          AZURE_SUBNET_NAME: op://IAC/Azure/subnet_name
+          AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
+          AZURE_SSH_PUBLIC_KEY_PATH: op://IAC/Azure/ssh_public_key_path
+          AZURE_LOCATION: op://IAC/Azure/location
+          AZURE_VM_SIZE: op://IAC/Azure/vm_size
+
+          ESXI_HOSTNAME: op://IAC/ESXi/hostname
+          ESXI_USERNAME: op://IAC/ESXi/username
+          ESXI_PASSWORD: op://IAC/ESXi/password
+          ESXI_DATASTORE: op://IAC/ESXi/datastore
+          ESXI_NETWORK: op://IAC/ESXi/network
+          ESXI_OVF_SOURCE: op://IAC/ESXi/ovf_source
+
+          ADMIN_SSH_PRIVATE_KEY_PATH: op://IAC/SSH/admin_private_key_path
+
+          TESTUSER_PUBLIC_KEY: op://IAC/Testuser/public_key
+          TESTUSER_PRIVATE_KEY: op://IAC/Testuser/private_key
+
+          TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
+          TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
+          TF_BACKEND_CONTAINER_NAME: op://IAC/TerraformBackend/container_name
+
+          HELLO_CONTAINER_IMAGE: op://IAC/Container/image
+
+      - name: Controleer 1Password secrets
+        run: |
+          test -n "$AZURE_SUBSCRIPTION_ID"
+          test -n "$AZURE_RESOURCE_GROUP_NAME"
+          test -n "$ESXI_HOSTNAME"
+          test -n "$TF_BACKEND_STORAGE_ACCOUNT_NAME"
+          test -n "$HELLO_CONTAINER_IMAGE"
+          echo "1Password secrets zijn geladen."
+
+      - name: Controleer Azure login
+        run: az account show
+
+      - name: Installeer Ansible requirements
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-galaxy install -r requirements.yml --force
+
+      - name: Terraform fmt Azure
+        working-directory: eind-opdracht/terraform/azure
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init Azure
+        working-directory: eind-opdracht/terraform/azure
+        run: |
+          terraform init -reconfigure -input=false \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+            -backend-config="key=eind-opdracht-azure.tfstate"
+
+      - name: Terraform validate Azure
+        working-directory: eind-opdracht/terraform/azure
+        run: terraform validate
+
+      - name: Terraform plan Azure
+        working-directory: eind-opdracht/terraform/azure
+        env:
+          TF_VAR_subscription_id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
+          TF_VAR_location: ${{ env.AZURE_LOCATION }}
+          TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
+          TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
+          TF_VAR_vm_name: eindopdracht-azure-vm
+          TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply Azure
+        working-directory: eind-opdracht/terraform/azure
+        env:
+          TF_VAR_subscription_id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+          TF_VAR_resource_group_name: ${{ env.AZURE_RESOURCE_GROUP_NAME }}
+          TF_VAR_location: ${{ env.AZURE_LOCATION }}
+          TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
+          TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
+          TF_VAR_vm_name: eindopdracht-azure-vm
+          TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Terraform fmt ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        run: |
+          terraform init -reconfigure -input=false \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
+            -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
+            -backend-config="key=eind-opdracht-esxi.tfstate"
+
+      - name: Terraform validate ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        env:
+          TF_VAR_esxi_hostname: ${{ env.ESXI_HOSTNAME }}
+          TF_VAR_esxi_username: ${{ env.ESXI_USERNAME }}
+          TF_VAR_esxi_password: ${{ env.ESXI_PASSWORD }}
+          TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
+          TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
+          TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
+          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform validate
+
+      - name: Terraform plan ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        env:
+          TF_VAR_esxi_hostname: ${{ env.ESXI_HOSTNAME }}
+          TF_VAR_esxi_username: ${{ env.ESXI_USERNAME }}
+          TF_VAR_esxi_password: ${{ env.ESXI_PASSWORD }}
+          TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
+          TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
+          TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
+          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform apply ESXi
+        working-directory: eind-opdracht/terraform/esxi
+        env:
+          TF_VAR_esxi_hostname: ${{ env.ESXI_HOSTNAME }}
+          TF_VAR_esxi_username: ${{ env.ESXI_USERNAME }}
+          TF_VAR_esxi_password: ${{ env.ESXI_PASSWORD }}
+          TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
+          TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
+          TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
+          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
+          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY_PATH }}
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Genereer ESXi inventory uit Terraform output
+        working-directory: eind-opdracht
+        run: |
+          ESXI_VM_NAME=$(terraform -chdir=terraform/esxi output -raw esxi_vm_name)
+          ESXI_VM_IP=$(terraform -chdir=terraform/esxi output -raw esxi_vm_ip)
+
+          cat > ansible/inventory.esxi.ini <<EOF
+          [platform_esxi]
+          ${ESXI_VM_NAME} ansible_host=${ESXI_VM_IP}
+
+          [docker_hosts:children]
+          platform_esxi
+          EOF
+
+      - name: Controleer inventories
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-inventory -i inventory.azure_rm.yml -i inventory.esxi.ini --graph
+
+      - name: Wacht tot SSH beschikbaar is
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible -i inventory.azure_rm.yml -i inventory.esxi.ini docker_hosts -m wait_for_connection -a "timeout=300"
+
+      - name: Voer Ansible playbook uit
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-playbook -i inventory.azure_rm.yml -i inventory.esxi.ini playbook.yml
+
+      - name: Test SSH van ESXi VM naar Azure VM als testuser
+        working-directory: eind-opdracht/ansible
+        run: |
+          source ~/venvs/ansible-azure/bin/activate
+          ansible-inventory -i inventory.azure_rm.yml --list > /tmp/eindopdracht_azure_inventory.json
+
+          AZURE_IP=$(python3 - <<'PY'
+          import json
+
+          with open("/tmp/eindopdracht_azure_inventory.json", "r", encoding="utf-8") as f:
+              data = json.load(f)
+
+          azure_hosts = data.get("platform_azure", {}).get("hosts", [])
+          if not azure_hosts:
+              raise SystemExit("Geen Azure host gevonden in platform_azure")
+
+          host = azure_hosts[0]
+          hostvars = data.get("_meta", {}).get("hostvars", {}).get(host, {})
+          public_ips = hostvars.get("public_ipv4_addresses", [])
+
+          print(hostvars.get("ansible_host") or (public_ips[0] if public_ips else ""))
+          PY
+          )
+
+          if [ -z "$AZURE_IP" ]; then
+            echo "Geen Azure IP gevonden."
+            exit 1
+          fi
+
+          ansible -i inventory.esxi.ini platform_esxi -b -m command -a "sudo -u testuser ssh -o StrictHostKeyChecking=no testuser@${AZURE_IP} hostname"

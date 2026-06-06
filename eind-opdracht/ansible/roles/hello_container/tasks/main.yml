@@ -1,0 +1,21 @@
+---
+- name: Start Hello World container
+  community.docker.docker_container:
+    name: "{{ hello_container_name }}"
+    image: "{{ hello_container_image }}"
+    state: started
+    restart_policy: always
+    pull: true
+    published_ports:
+      - "{{ hello_container_port }}:80"
+
+- name: Controleer HTTP response van container
+  ansible.builtin.uri:
+    url: "http://localhost:{{ hello_container_port }}"
+    method: GET
+    status_code: 200
+  register: container_http_check
+
+- name: Toon container controle
+  ansible.builtin.debug:
+    msg: "Container {{ hello_container_name }} draait op {{ inventory_hostname }} met HTTP status {{ container_http_check.status }}."

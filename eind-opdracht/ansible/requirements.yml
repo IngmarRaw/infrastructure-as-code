@@ -1,0 +1,7 @@
+---
+roles:
+  - name: IngmarRaw.docker
+
+collections:
+  - name: community.docker
+  - name: azure.azcollection
