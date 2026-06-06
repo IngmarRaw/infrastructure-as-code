@@ -18,7 +18,7 @@ provider "esxi" {
 }
 
 locals {
-  ssh_public_key = trimspace(file(pathexpand(var.ssh_public_key_path)))
+  ssh_public_key = trimspace(var.ssh_public_key)
 }
 
 resource "esxi_guest" "vm" {

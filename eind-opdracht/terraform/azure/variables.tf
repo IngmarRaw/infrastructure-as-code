@@ -46,8 +46,8 @@ variable "admin_username" {
   sensitive   = true
 }
 
-variable "ssh_public_key_path" {
-  description = "Pad naar de SSH public key op de self-hosted runner"
+variable "ssh_public_key" {
+  description = "SSH public key inhoud voor de Azure VM"
   type        = string
   sensitive   = true
 }
