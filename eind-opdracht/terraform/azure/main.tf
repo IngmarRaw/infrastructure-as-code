@@ -18,6 +18,13 @@ provider "azurerm" {
 
 locals {
   ssh_public_key = trimspace(var.ssh_public_key)
+
+  instances = {
+    for index in range(var.instance_count) :
+    format("%s-%02d", var.vm_name_prefix, index + 1) => {
+      name = format("%s-%02d", var.vm_name_prefix, index + 1)
+    }
+  }
 }
 
 data "azurerm_virtual_network" "vnet" {
@@ -32,7 +39,9 @@ data "azurerm_subnet" "subnet" {
 }
 
 resource "azurerm_public_ip" "vm_pip" {
-  name                = "pip-${var.vm_name}"
+  for_each = local.instances
+
+  name                = "pip-${each.value.name}"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
@@ -42,7 +51,9 @@ resource "azurerm_public_ip" "vm_pip" {
 }
 
 resource "azurerm_network_security_group" "vm_nsg" {
-  name                = "nsg-${var.vm_name}"
+  for_each = local.instances
+
+  name                = "nsg-${each.value.name}"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -74,7 +85,9 @@ resource "azurerm_network_security_group" "vm_nsg" {
 }
 
 resource "azurerm_network_interface" "vm_nic" {
-  name                = "nic-${var.vm_name}"
+  for_each = local.instances
+
+  name                = "nic-${each.value.name}"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -82,26 +95,29 @@ resource "azurerm_network_interface" "vm_nic" {
     name                          = "internal"
     subnet_id                     = data.azurerm_subnet.subnet.id
     private_ip_address_allocation = "Dynamic"
-    public_ip_address_id          = azurerm_public_ip.vm_pip.id
+    public_ip_address_id          = azurerm_public_ip.vm_pip[each.key].id
   }
 
   tags = var.tags
 }
 
 resource "azurerm_network_interface_security_group_association" "vm_nsg_association" {
-  network_interface_id      = azurerm_network_interface.vm_nic.id
-  network_security_group_id = azurerm_network_security_group.vm_nsg.id
+  for_each = local.instances
+  network_interface_id      = azurerm_network_interface.vm_nic[each.key].id
+  network_security_group_id = azurerm_network_security_group.vm_nsg[each.key].id
 }
 
 resource "azurerm_linux_virtual_machine" "vm" {
-  name                = var.vm_name
+  for_each = local.instances
+
+  name                = each.value.name
   resource_group_name = var.resource_group_name
   location            = var.location
   size                = var.vm_size
   admin_username      = var.admin_username
 
   network_interface_ids = [
-    azurerm_network_interface.vm_nic.id
+    azurerm_network_interface.vm_nic[each.key].id
   ]
 
   disable_password_authentication = true

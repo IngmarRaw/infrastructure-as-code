@@ -28,10 +28,21 @@ variable "subnet_name" {
   sensitive   = true
 }
 
-variable "vm_name" {
-  description = "Naam van de Azure VM"
+variable "vm_name_prefix" {
+  description = "Prefix voor de Azure VM naam"
   type        = string
-  default     = "eindopdracht-azure-vm"
+  default     = "webserver"
+}
+
+variable "instance_count" {
+  description = "Aantal Azure VM's dat moet worden aangemaakt"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.instance_count >= 1 && var.instance_count <= 3
+    error_message = "instance_count moet tussen 1 en 3 liggen."
+  }
 }
 
 variable "vm_size" {

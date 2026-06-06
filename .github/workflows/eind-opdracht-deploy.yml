@@ -120,7 +120,8 @@ jobs:
           TF_VAR_location="$AZURE_LOCATION" \
           TF_VAR_virtual_network_name="$AZURE_VIRTUAL_NETWORK_NAME" \
           TF_VAR_subnet_name="$AZURE_SUBNET_NAME" \
-          TF_VAR_vm_name="eindopdracht-azure-vm" \
+          TF_VAR_vm_name_prefix="webserver" \
+          TF_VAR_instance_count="1" \
           TF_VAR_vm_size="$AZURE_VM_SIZE" \
           TF_VAR_admin_username="$AZURE_ADMIN_USERNAME" \
           TF_VAR_ssh_public_key="$AZURE_SSH_PUBLIC_KEY" \
@@ -156,7 +157,8 @@ jobs:
           TF_VAR_disk_store="$ESXI_DATASTORE" \
           TF_VAR_virtual_network="$ESXI_NETWORK" \
           TF_VAR_ovf_source="$ESXI_OVF_SOURCE" \
-          TF_VAR_vm_name="eindopdracht-esxi-vm" \
+          TF_VAR_vm_name="database-server" \
+          TF_VAR_instance_count="1" \
           TF_VAR_admin_username="$AZURE_ADMIN_USERNAME" \
           TF_VAR_ssh_public_key="$AZURE_SSH_PUBLIC_KEY" \
           terraform plan -input=false -out=tfplan
@@ -199,37 +201,34 @@ jobs:
         working-directory: eind-opdracht
         run: |
           python3 - <<'PY'
+          import json
           import subprocess
           from pathlib import Path
 
-          def terraform_output(name: str) -> str:
+          def terraform_json_output(name: str):
               result = subprocess.run(
-                  ["terraform", "-chdir=terraform/esxi", "output", "-raw", name],
+                  ["terraform", "-chdir=terraform/esxi", "output", "-json", name],
                   check=True,
                   capture_output=True,
                   text=True,
               )
-              return result.stdout.strip()
+              return json.loads(result.stdout)
 
-          esxi_vm_name = terraform_output("esxi_vm_name")
-          esxi_vm_ip = terraform_output("esxi_vm_ip")
+          esxi_vm_ips = terraform_json_output("esxi_vm_ips")
 
-          if not esxi_vm_name or esxi_vm_name == "null":
-              raise SystemExit("ESXi VM naam is leeg of null.")
+          if not esxi_vm_ips:
+              raise SystemExit("Geen ESXi VM IP's gevonden.")
 
-          if not esxi_vm_ip or esxi_vm_ip == "null":
-              raise SystemExit("ESXi VM IP is leeg of null.")
+          lines = ["[platform_esxi]"]
+          for vm_name, vm_ip in esxi_vm_ips.items():
+              if not vm_ip or vm_ip == "null":
+                  raise SystemExit("ESXi VM IP is leeg of null.")
+              lines.append(f"{vm_name} ansible_host={vm_ip}")
 
-          inventory = (
-              "[platform_esxi]\n"
-              f"{esxi_vm_name} ansible_host={esxi_vm_ip}\n"
-              "\n"
-              "[docker_hosts:children]\n"
-              "platform_esxi\n"
-          )
+          lines.extend(["", "[docker_hosts:children]", "platform_esxi", ""])
 
           path = Path("ansible/inventory.esxi.ini")
-          path.write_text(inventory, encoding="utf-8")
+          path.write_text("\n".join(lines), encoding="utf-8")
           path.chmod(0o600)
           PY
 

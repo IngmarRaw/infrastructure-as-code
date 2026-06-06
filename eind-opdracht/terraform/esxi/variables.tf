@@ -46,10 +46,21 @@ variable "ovf_source" {
   sensitive   = true
 }
 
-variable "vm_name" {
-  description = "Naam van de ESXi VM"
+variable "vm_name_prefix" {
+  description = "Prefix voor de ESXi VM naam"
   type        = string
-  default     = "eindopdracht-esxi-vm"
+  default     = "database-server"
+}
+
+variable "instance_count" {
+  description = "Aantal ESXi VM's dat moet worden aangemaakt"
+  type        = number
+  default     = 1
+
+  validation {
+    condition     = var.instance_count >= 1 && var.instance_count <= 3
+    error_message = "instance_count moet tussen 1 en 3 liggen."
+  }
 }
 
 variable "admin_username" {

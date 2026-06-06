@@ -19,10 +19,19 @@ provider "esxi" {
 
 locals {
   ssh_public_key = trimspace(var.ssh_public_key)
+
+  instances = {
+    for index in range(var.instance_count) :
+    format("%s-%02d", var.vm_name_prefix, index + 1) => {
+      name = format("%s-%02d", var.vm_name_prefix, index + 1)
+    }
+  }
 }
 
 resource "esxi_guest" "vm" {
-  guest_name     = var.vm_name
+  for_each = local.instances
+
+  guest_name     = each.value.name
   disk_store     = var.disk_store
   boot_disk_size = var.boot_disk_size
 
@@ -39,7 +48,7 @@ resource "esxi_guest" "vm" {
 
   guestinfo = {
     "metadata" = base64encode(templatefile("${path.module}/metadata.tftpl", {
-      vm_name = var.vm_name
+      vm_name = each.value.name
     }))
     "metadata.encoding" = "base64"
 

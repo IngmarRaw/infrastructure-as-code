@@ -76,7 +76,7 @@ jobs:
           TF_VAR_disk_store="$ESXI_DATASTORE" \
           TF_VAR_virtual_network="$ESXI_NETWORK" \
           TF_VAR_ovf_source="$ESXI_OVF_SOURCE" \
-          TF_VAR_vm_name="eindopdracht-esxi-vm" \
+          TF_VAR_vm_name="database-server" \
           TF_VAR_admin_username="$AZURE_ADMIN_USERNAME" \
           TF_VAR_ssh_public_key="$AZURE_SSH_PUBLIC_KEY" \
           terraform plan -destroy -input=false -out=tfdestroyplan
@@ -90,7 +90,8 @@ jobs:
           TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
           TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
           TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
-          TF_VAR_vm_name: eindopdracht-esxi-vm
+          TF_VAR_vm_name: database-server
+          TF_VAR_instance_count: "1"
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
           TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform apply -input=false -auto-approve tfdestroyplan
@@ -112,7 +113,7 @@ jobs:
           TF_VAR_location="$AZURE_LOCATION" \
           TF_VAR_virtual_network_name="$AZURE_VIRTUAL_NETWORK_NAME" \
           TF_VAR_subnet_name="$AZURE_SUBNET_NAME" \
-          TF_VAR_vm_name="eindopdracht-azure-vm" \
+          TF_VAR_vm_name="webserver" \
           TF_VAR_vm_size="$AZURE_VM_SIZE" \
           TF_VAR_admin_username="$AZURE_ADMIN_USERNAME" \
           TF_VAR_ssh_public_key="$AZURE_SSH_PUBLIC_KEY" \
@@ -126,7 +127,7 @@ jobs:
           TF_VAR_location: ${{ env.AZURE_LOCATION }}
           TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
           TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
-          TF_VAR_vm_name: eindopdracht-azure-vm
+          TF_VAR_vm_name: webserver
           TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
           TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
