@@ -8,11 +8,25 @@
     pull: true
     published_ports:
       - "{{ hello_container_port }}:80"
-
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+- name: Verzamel informatie over Hello World container
+  community.docker.docker_container_info:
+    name: "{{ hello_container_name }}"
+  register: hello_container_info
+- name: Controleer of Hello World container draait
+  ansible.builtin.assert:
+    that:
+      - hello_container_info.exists
+      - hello_container_info.container.State.Running
+    fail_msg: "De Hello World container draait niet correct."
+    success_msg: "De Hello World container draait correct."
 - name: Controleer HTTP response van container
   ansible.builtin.uri:
     url: "http://localhost:{{ hello_container_port }}"
     method: GET
     status_code: 200
   register: hello_container_http_check
-
