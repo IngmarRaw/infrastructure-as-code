@@ -47,4 +47,3 @@
   changed_when: false
   no_log: true
   when: "'platform_esxi' in group_names"
-
