@@ -1,7 +1,7 @@
 ---
 galaxy_info:
-  author: Ingmar Renses
-  description: Start de zelfgebouwde Hello World container met community.docker.
+  author: IngmarRaw
+  description: Start de Hello World container met community.docker.
   company: Windesheim
   license: MIT
   min_ansible_version: "2.14"
@@ -18,5 +18,4 @@ galaxy_info:
     - cicd
     - web
 
-dependencies:
-  - role: IngmarRaw.docker
+dependencies: []

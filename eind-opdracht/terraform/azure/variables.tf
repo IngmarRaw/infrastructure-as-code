@@ -68,10 +68,12 @@ variable "tags" {
   type        = map(string)
 
   default = {
-    project     = "eind-opdracht"
-    platform    = "azure"
-    role        = "dockerhost"
-    managed_by  = "terraform"
-    environment = "test"
+    project          = "eind-opdracht"
+    platform         = "azure"
+    role             = "dockerhost"
+    managed_by       = "terraform"
+    environment      = "test"
+    ansible_group    = "docker_hosts"
+    ansible_platform = "platform_azure"
   }
 }
