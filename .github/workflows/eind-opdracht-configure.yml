@@ -56,7 +56,7 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-galaxy install -r requirements.yml --force
+          ansible-galaxy install -r requirements.yml
 
       - name: Controleer ansible-lint
         working-directory: eind-opdracht/ansible
@@ -85,90 +85,17 @@ jobs:
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-esxi.tfstate"
 
-      - name: Genereer Azure dynamic inventory
-        working-directory: eind-opdracht
-        run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-
-          resource_group = os.environ.get("AZURE_RESOURCE_GROUP_NAME", "").strip()
-          if not resource_group:
-              raise SystemExit("AZURE_RESOURCE_GROUP_NAME is leeg.")
-
-          lines = [
-              "---",
-              "plugin: azure.azcollection.azure_rm",
-              "auth_source: cli",
-              "",
-              "include_vm_resource_groups:",
-              f"  - {resource_group}",
-              "",
-              "plain_host_names: true",
-              "",
-              "conditional_groups:",
-              "  platform_azure: \"'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'\"",
-              "  docker_hosts: \"'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'\"",
-              "",
-          ]
-
-          path = Path("ansible/inventory.azure_rm.yml")
-          path.write_text("\n".join(lines), encoding="utf-8")
-          path.chmod(0o600)
-          PY
-
-      - name: Genereer ESXi inventory uit Terraform output
-        working-directory: eind-opdracht
-        run: |
-          python3 - <<'PY'
-          import json
-          import subprocess
-          from pathlib import Path
-
-          def terraform_json_output(name: str):
-              result = subprocess.run(
-                  ["terraform", "-chdir=terraform/esxi", "output", "-json", name],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              )
-              return json.loads(result.stdout)
-
-          esxi_vm_ips = terraform_json_output("esxi_vm_ips")
-
-          if not esxi_vm_ips:
-              raise SystemExit("Geen ESXi VM IP's gevonden.")
-
-          host_lines = []
-          for vm_name, vm_ip in esxi_vm_ips.items():
-              if not vm_ip or vm_ip == "null":
-                  raise SystemExit("ESXi VM IP is leeg of null.")
-              host_lines.append(f"{vm_name} ansible_host={vm_ip}")
-
-          lines = []
-          lines.append("[platform_esxi]")
-          lines.extend(host_lines)
-          lines.append("")
-          lines.append("[docker_hosts:children]")
-          lines.append("platform_esxi")
-          lines.append("")
-
-          path = Path("ansible/inventory.esxi.ini")
-          path.write_text("\n".join(lines), encoding="utf-8")
-          path.chmod(0o600)
-          PY
-
       - name: Controleer inventories
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-inventory -i inventory.azure_rm.yml -i inventory.esxi.ini --list > /dev/null
+          ansible-inventory -i inventory.azure_rm.yml -i inventory_esxi.py --list > /dev/null
 
       - name: Wacht tot SSH beschikbaar is
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible -i inventory.azure_rm.yml -i inventory.esxi.ini docker_hosts \
+          ansible -i inventory.azure_rm.yml -i inventory_esxi.py docker_hosts \
             -m wait_for_connection \
             -a "timeout=300"
 
@@ -176,7 +103,7 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-playbook -i inventory.azure_rm.yml -i inventory.esxi.ini playbook.yml
+          ansible-playbook -i inventory.azure_rm.yml -i inventory_esxi.py playbook.yml
 
       - name: Test SSH van ESXi VM naar Azure VM als testuser
         working-directory: eind-opdracht/ansible
@@ -206,5 +133,5 @@ jobs:
           PY
           )
 
-          ansible -i inventory.esxi.ini platform_esxi -b -m command \
+          ansible -i inventory_esxi.py platform_esxi -b -m command \
             -a "sudo -u testuser ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -i /home/testuser/.ssh/id_ed25519 testuser@${AZURE_IP} hostname"

@@ -3,7 +3,7 @@ plugin: azure.azcollection.azure_rm
 auth_source: cli
 
 include_vm_resource_groups:
-  - placeholder
+  - "{{ lookup('env', 'AZURE_RESOURCE_GROUP_NAME') }}"
 
 plain_host_names: true
 
