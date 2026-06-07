@@ -110,11 +110,12 @@ jobs:
         working-directory: eind-opdracht/terraform/azure
         run: |
           TF_VAR_subscription_id="$AZURE_SUBSCRIPTION_ID" \
-          TF_VAR_resource_group="$AZURE_RESOURCE_GROUP_NAME" \
+          TF_VAR_resource_group_name="$AZURE_RESOURCE_GROUP_NAME" \
           TF_VAR_location="$AZURE_LOCATION" \
           TF_VAR_virtual_network_name="$AZURE_VIRTUAL_NETWORK_NAME" \
           TF_VAR_subnet_name="$AZURE_SUBNET_NAME" \
-          TF_VAR_vm_name="webserver" \
+          TF_VAR_vm_name_prefix="webserver" \
+          TF_VAR_instance_count="1" \
           TF_VAR_vm_size="$AZURE_VM_SIZE" \
           TF_VAR_admin_username="$AZURE_ADMIN_USERNAME" \
           TF_VAR_ssh_public_key="$AZURE_SSH_PUBLIC_KEY" \
@@ -128,8 +129,9 @@ jobs:
           TF_VAR_location: ${{ env.AZURE_LOCATION }}
           TF_VAR_virtual_network_name: ${{ env.AZURE_VIRTUAL_NETWORK_NAME }}
           TF_VAR_subnet_name: ${{ env.AZURE_SUBNET_NAME }}
-          TF_VAR_vm_name: webserver
+          TF_VAR_vm_name_prefix: webserver
+          TF_VAR_instance_count: "1"
           TF_VAR_vm_size: ${{ env.AZURE_VM_SIZE }}
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
-          TF_VAR_ssh_public_key_path: ${{ env.AZURE_SSH_PUBLIC_KEY }}
+          TF_VAR_ssh_public_key: ${{ env.AZURE_SSH_PUBLIC_KEY }}
         run: terraform apply -input=false -auto-approve tfdestroyplan
