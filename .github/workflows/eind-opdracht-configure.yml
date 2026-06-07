@@ -86,36 +86,16 @@ jobs:
             -backend-config="key=eind-opdracht-esxi.tfstate"
 
       - name: Genereer Azure dynamic inventory
-        working-directory: eind-opdracht
+        working-directory: eind-opdracht/ansible
         run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
+          test -n "$AZURE_RESOURCE_GROUP_NAME"
 
-          resource_group = os.environ.get("AZURE_RESOURCE_GROUP_NAME", "").strip()
-          if not resource_group:
-              raise SystemExit("AZURE_RESOURCE_GROUP_NAME is leeg.")
+          sed "s|__AZURE_RESOURCE_GROUP_NAME__|${AZURE_RESOURCE_GROUP_NAME}|g" \
+            templates/inventory.azure_rm.yml.tpl > inventory.azure_rm.yml
 
-          lines = [
-              "---",
-              "plugin: azure.azcollection.azure_rm",
-              "auth_source: cli",
-              "",
-              "include_vm_resource_groups:",
-              f"  - {resource_group}",
-              "",
-              "plain_host_names: true",
-              "",
-              "conditional_groups:",
-              "  platform_azure: \"'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'\"",
-              "  docker_hosts: \"'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'\"",
-              "",
-          ]
+          chmod 600 inventory.azure_rm.yml
 
-          path = Path("ansible/inventory.azure_rm.yml")
-          path.write_text("\n".join(lines), encoding="utf-8")
-          path.chmod(0o600)
-          PY
+          grep -q "$AZURE_RESOURCE_GROUP_NAME" inventory.azure_rm.yml
 
       - name: Controleer inventories
         working-directory: eind-opdracht/ansible
