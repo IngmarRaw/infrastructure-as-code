@@ -91,7 +91,7 @@ jobs:
           TF_VAR_disk_store: ${{ env.ESXI_DATASTORE }}
           TF_VAR_virtual_network: ${{ env.ESXI_NETWORK }}
           TF_VAR_ovf_source: ${{ env.ESXI_OVF_SOURCE }}
-          TF_VAR_vm_name: database-server
+          TF_VAR_vm_name_prefix: database-server
           TF_VAR_instance_count: "1"
           TF_VAR_admin_username: ${{ env.AZURE_ADMIN_USERNAME }}
           TF_VAR_ssh_public_key: ${{ env.AZURE_SSH_PUBLIC_KEY }}
