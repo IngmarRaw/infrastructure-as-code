@@ -24,7 +24,7 @@ jobs:
           export-env: true
         env:
           AZURE_SUBSCRIPTION_ID: op://IAC/Azure/subscription_id
-          AZURE_RESOURCE_GROUP: op://IAC/Azure/resource_group
+          AZURE_RESOURCE_GROUP: op://IAC/Azure/resource_group_name
           AZURE_VIRTUAL_NETWORK_NAME: op://IAC/Azure/virtual_network_name
           AZURE_SUBNET_NAME: op://IAC/Azure/subnet_name
           AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
@@ -46,7 +46,7 @@ jobs:
       - name: Controleer verplichte Terraform variabelen
         run: |
           test -n "$AZURE_SUBSCRIPTION_ID"
-          test -n "$AZURE_RESOURCE_GROUP"
+          test -n "$AZURE_RESOURCE_GROUP_NAME"
           test -n "$AZURE_VIRTUAL_NETWORK_NAME"
           test -n "$AZURE_SUBNET_NAME"
           test -n "$AZURE_ADMIN_USERNAME"
@@ -87,7 +87,7 @@ jobs:
         working-directory: eind-opdracht/terraform/azure
         run: |
           TF_VAR_subscription_id="$AZURE_SUBSCRIPTION_ID" \
-          TF_VAR_resource_group_name="$AZURE_RESOURCE_GROUP" \
+          TF_VAR_resource_group_name="$AZURE_RESOURCE_GROUP_NAME" \
           TF_VAR_location="$AZURE_LOCATION" \
           TF_VAR_virtual_network_name="$AZURE_VIRTUAL_NETWORK_NAME" \
           TF_VAR_subnet_name="$AZURE_SUBNET_NAME" \

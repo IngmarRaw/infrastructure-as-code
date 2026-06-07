@@ -23,7 +23,7 @@ jobs:
         with:
           export-env: true
         env:
-          AZURE_RESOURCE_GROUP: op://IAC/Azure/resource_group
+          AZURE_RESOURCE_GROUP_NAME: op://IAC/Azure/resource_group_name
           AZURE_ADMIN_USERNAME: op://IAC/Azure/admin_username
 
           ADMIN_SSH_PRIVATE_KEY: op://IAC/SSH/admin_private_key
@@ -39,7 +39,7 @@ jobs:
 
       - name: Controleer verplichte Ansible variabelen
         run: |
-          test -n "$AZURE_RESOURCE_GROUP"
+          test -n "$AZURE_RESOURCE_GROUP_NAME"
           test -n "$AZURE_ADMIN_USERNAME"
           test -n "$ADMIN_SSH_PRIVATE_KEY"
           test -n "$TESTUSER_PUBLIC_KEY"
