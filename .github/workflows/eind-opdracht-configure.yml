@@ -31,7 +31,7 @@ jobs:
           TESTUSER_PUBLIC_KEY: op://IAC/Testuser/public_key
           TESTUSER_PRIVATE_KEY: op://IAC/Testuser/private_key
 
-          TF_BACKEND_RESOURCE_GROUP: op://IAC/TerraformBackend/resource_group
+          TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
           TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
           TF_BACKEND_CONTAINER_NAME: op://IAC/TerraformBackend/container_name
 
@@ -44,7 +44,7 @@ jobs:
           test -n "$ADMIN_SSH_PRIVATE_KEY"
           test -n "$TESTUSER_PUBLIC_KEY"
           test -n "$TESTUSER_PRIVATE_KEY"
-          test -n "$TF_BACKEND_RESOURCE_GROUP"
+          test -n "$TF_BACKEND_RESOURCE_GROUP_NAME"
           test -n "$TF_BACKEND_STORAGE_ACCOUNT_NAME"
           test -n "$TF_BACKEND_CONTAINER_NAME"
           test -n "$HELLO_CONTAINER_IMAGE"
@@ -80,7 +80,7 @@ jobs:
         working-directory: eind-opdracht/terraform/esxi
         run: |
           terraform init -reconfigure -input=false \
-            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP" \
+            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP_NAME" \
             -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-esxi.tfstate"

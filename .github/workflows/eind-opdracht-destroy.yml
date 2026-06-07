@@ -51,7 +51,7 @@ jobs:
           ESXI_NETWORK: op://IAC/ESXi/network
           ESXI_OVF_SOURCE: op://IAC/ESXi/ovf_source
 
-          TF_BACKEND_RESOURCE_GROUP: op://IAC/TerraformBackend/resource_group
+          TF_BACKEND_RESOURCE_GROUP_NAME: op://IAC/TerraformBackend/resource_group_name
           TF_BACKEND_STORAGE_ACCOUNT_NAME: op://IAC/TerraformBackend/storage_account_name
           TF_BACKEND_CONTAINER_NAME: op://IAC/TerraformBackend/container_name
 
@@ -62,7 +62,7 @@ jobs:
         working-directory: eind-opdracht/terraform/esxi
         run: |
           terraform init -reconfigure -input=false \
-            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP" \
+            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP_NAME" \
             -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-esxi.tfstate"
@@ -101,7 +101,7 @@ jobs:
         working-directory: eind-opdracht/terraform/azure
         run: |
           terraform init -reconfigure -input=false \
-            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP" \
+            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP_NAME" \
             -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-azure.tfstate"
