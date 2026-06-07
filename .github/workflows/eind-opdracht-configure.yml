@@ -56,7 +56,7 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-galaxy install -r requirements.yml
+          ansible-galaxy install -r requirements.yml --force
 
       - name: Controleer ansible-lint
         working-directory: eind-opdracht/ansible
@@ -85,6 +85,38 @@ jobs:
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-esxi.tfstate"
 
+      - name: Genereer Azure dynamic inventory
+        working-directory: eind-opdracht
+        run: |
+          python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          resource_group = os.environ.get("AZURE_RESOURCE_GROUP_NAME", "").strip()
+          if not resource_group:
+              raise SystemExit("AZURE_RESOURCE_GROUP_NAME is leeg.")
+
+          lines = [
+              "---",
+              "plugin: azure.azcollection.azure_rm",
+              "auth_source: cli",
+              "",
+              "include_vm_resource_groups:",
+              f"  - {resource_group}",
+              "",
+              "plain_host_names: true",
+              "",
+              "conditional_groups:",
+              "  platform_azure: \"'platform' in tags and tags.platform == 'azure' and 'project' in tags and tags.project == 'eind-opdracht'\"",
+              "  docker_hosts: \"'role' in tags and tags.role == 'dockerhost' and 'project' in tags and tags.project == 'eind-opdracht'\"",
+              "",
+          ]
+
+          path = Path("ansible/inventory.azure_rm.yml")
+          path.write_text("\n".join(lines), encoding="utf-8")
+          path.chmod(0o600)
+          PY
+
       - name: Controleer inventories
         working-directory: eind-opdracht/ansible
         run: |
@@ -95,7 +127,7 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible -i inventory.azure_rm.yml -i inventory_esxi.py docker_hosts \
+          ansible -i inventory.azure_rm.yml -i inventory.esxi.ini docker_hosts \
             -m wait_for_connection \
             -a "timeout=300"
 
@@ -133,5 +165,5 @@ jobs:
           PY
           )
 
-          ansible -i inventory_esxi.py platform_esxi -b -m command \
+          ansible -i inventory.esxi.ini platform_esxi -b -m command \
             -a "sudo -u testuser ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -i /home/testuser/.ssh/id_ed25519 testuser@${AZURE_IP} hostname"
