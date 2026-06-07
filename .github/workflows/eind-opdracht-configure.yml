@@ -89,13 +89,21 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           test -n "$AZURE_RESOURCE_GROUP_NAME"
+          test -f templates/inventory.azure_rm.yml.tpl
+
+          grep -q "__AZURE_RESOURCE_GROUP_NAME__" templates/inventory.azure_rm.yml.tpl
 
           sed "s|__AZURE_RESOURCE_GROUP_NAME__|${AZURE_RESOURCE_GROUP_NAME}|g" \
             templates/inventory.azure_rm.yml.tpl > inventory.azure_rm.yml
 
           chmod 600 inventory.azure_rm.yml
 
-          grep -q "$AZURE_RESOURCE_GROUP_NAME" inventory.azure_rm.yml
+          if grep -q "__AZURE_RESOURCE_GROUP_NAME__" inventory.azure_rm.yml; then
+            echo "Azure inventory template placeholder is niet vervangen."
+            exit 1
+          fi
+
+          test -s inventory.azure_rm.yml
 
       - name: Controleer inventories
         working-directory: eind-opdracht/ansible
