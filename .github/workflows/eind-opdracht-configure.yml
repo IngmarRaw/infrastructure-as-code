@@ -80,7 +80,7 @@ jobs:
         working-directory: eind-opdracht/terraform/esxi
         run: |
           terraform init -reconfigure -input=false \
-            -backend-config="resource_group=$TF_BACKEND_RESOURCE_GROUP_NAME" \
+            -backend-config="resource_group_name=$TF_BACKEND_RESOURCE_GROUP_NAME" \
             -backend-config="storage_account_name=$TF_BACKEND_STORAGE_ACCOUNT_NAME" \
             -backend-config="container_name=$TF_BACKEND_CONTAINER_NAME" \
             -backend-config="key=eind-opdracht-esxi.tfstate"
