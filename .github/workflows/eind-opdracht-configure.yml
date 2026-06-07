@@ -121,13 +121,13 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-inventory -i inventory.azure_rm.yml -i inventory_esxi.py --list > /dev/null
+          ansible-inventory -i inventory.azure_rm.yml -i ./inventory_esxi.py --list > /dev/null
 
       - name: Wacht tot SSH beschikbaar is
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible -i inventory.azure_rm.yml -i inventory_esxi.py docker_hosts \
+          ansible -i inventory.azure_rm.yml -i ./inventory_esxi.py docker_hosts \
             -m wait_for_connection \
             -a "timeout=300"
 
@@ -135,7 +135,7 @@ jobs:
         working-directory: eind-opdracht/ansible
         run: |
           source ~/venvs/ansible-azure/bin/activate
-          ansible-playbook -i inventory.azure_rm.yml -i inventory_esxi.py playbook.yml
+          ansible-playbook -i inventory.azure_rm.yml -i ./inventory_esxi.py playbook.yml
 
       - name: Test SSH van ESXi VM naar Azure VM als testuser
         working-directory: eind-opdracht/ansible
@@ -165,5 +165,5 @@ jobs:
           PY
           )
 
-          ansible -i inventory_esxi.py platform_esxi -b -m command \
+          ansible -i ./inventory_esxi.py platform_esxi -b -m command \
             -a "sudo -u testuser ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=no -i /home/testuser/.ssh/id_ed25519 testuser@${AZURE_IP} hostname"
